@@ -220,7 +220,7 @@ Route::prefix('admin')->middleware(['admin.auth', 'track.visits'])->name('admin.
             ->name('siswa.export.passwords')->middleware('role:konselor,admin');
         Route::get('/siswa/export/all', [AdminSiswa::class, 'exportAllStudents'])
             ->name('siswa.export.all')->middleware('role:konselor,admin');
-            
+
         // Year Progression Routes
         Route::get('siswa/year-progression', [AdminSiswa::class, 'showYearProgressionPage'])
             ->name('siswa.year-progression');
@@ -230,6 +230,7 @@ Route::prefix('admin')->middleware(['admin.auth', 'track.visits'])->name('admin.
         // Bulk Actions
         Route::post('siswa/bulk-repeat-grade', [AdminSiswa::class, 'bulkUpdateRepeatGrade'])
             ->name('siswa.bulk.repeat');
+            
         // Counselor settings routes
         Route::get('/pesan/settings', [CounselorChat::class, 'showSettings'])
             ->name('pesan.settings');

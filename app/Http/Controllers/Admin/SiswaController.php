@@ -49,6 +49,7 @@ class SiswaController extends AdminBaseController
                 'password' => 'required|min:6',
                 'student_name' => 'required',
                 'class_id' => 'required',
+                'repeat_grade' => 'nullable|boolean',
             ]);
 
             // Create user with auto-generated email (not visible to student)
@@ -71,6 +72,7 @@ class SiswaController extends AdminBaseController
                 'photo' => $path,
                 'class_id' => $request->class_id,
                 'user_id' => $user->id,
+                'repeat_grade' => $request->boolean('repeat_grade', false),
             ]);
         },
         'Data siswa berhasil ditambah!',
@@ -569,14 +571,6 @@ class SiswaController extends AdminBaseController
     }
 
     /**
-     * Check if class is Grade X
-     */
-    private function isGradeX($className)
-    {
-        return preg_match('/^X\s/i', $className) || preg_match('/^X$/i', $className);
-    }
-
-    /**
      * Export ALL students to Excel with their current passwords (KONSELOR ONLY)
      * This exports all existing students with their actual passwords visible
      */
@@ -868,6 +862,7 @@ class SiswaController extends AdminBaseController
                 'password' => 'nullable|min:6',
                 'student_name' => 'required',
                 'class_id' => 'required',
+                'repeat_grade' => 'nullable|boolean',
             ]);
 
             $path = $siswa->photo;
@@ -897,6 +892,7 @@ class SiswaController extends AdminBaseController
                 'student_name' => $request->student_name,
                 'photo' => $path,
                 'class_id' => $request->class_id,
+                'repeat_grade' => $request->boolean('repeat_grade', false),
             ]);
         },
         'Data siswa berhasil diperbarui!',
@@ -929,37 +925,109 @@ class SiswaController extends AdminBaseController
     }
 
     /**
-     * Find column indices by header names
-     * Searches for: NIS, NAMA SISWA, KLS (case-insensitive)
-     * Returns column letters for use with cell references
+     * Show year progression page
      */
-    private function findColumnIndices($headerRow)
+    public function showYearProgressionPage()
     {
-        $indices = [
-            'nis' => null,
-            'nama' => null,
-            'kls' => null,
+        $stats = [
+            'total_students' => Siswa::count(),
+            'repeating_students' => Siswa::where('repeat_grade', true)->count(),
+            'grade_x' => Siswa::whereHas('class', function($q) {
+                $q->where('class_name', 'LIKE', 'X %');
+            })->count(),
+            'grade_xi' => Siswa::whereHas('class', function($q) {
+                $q->where('class_name', 'LIKE', 'XI %');
+            })->count(),
+            'grade_xii' => Siswa::whereHas('class', function($q) {
+                $q->where('class_name', 'LIKE', 'XII %');
+            })->count(),
+            'grade_xiii' => Siswa::whereHas('class', function($q) {
+                $q->where('class_name', 'LIKE', 'XIII %');
+            })->count(),
         ];
+        
+        return view('admin.siswa.year-progression', compact('stats'));
+    }
 
-        foreach ($headerRow as $index => $header) {
-            $header = strtoupper(trim($header ?? ''));
-
-            // Match NIS column
-            if (strpos($header, 'NIS') !== false && strpos($header, 'NISN') === false) {
-                $indices['nis'] = $index;
+    /**
+     * Execute year progression (manual trigger)
+     */
+    public function executeYearProgression(Request $request)
+    {
+        $dryRun = $request->boolean('dry_run', false);
+        
+        try {
+            if ($dryRun) {
+                // Run in dry-run mode
+                \Artisan::call('students:progress-year', ['--dry-run' => true]);
+            } else {
+                // Run actual progression
+                \Artisan::call('students:progress-year');
+                
+                // Store last execution info
+                session([
+                    'last_progression' => [
+                        'date' => now()->format('d-M-Y H:i'),
+                        'user' => auth()->user()->name,
+                        'summary' => 'Berhasil dijalankan'
+                    ]
+                ]);
             }
-
-            // Match NAMA SISWA column (can be NAMA, NAMA SISWA, STUDENT NAME, etc.)
-            if (strpos($header, 'NAMA') !== false && strpos($header, 'SISWA') !== false) {
-                $indices['nama'] = $index;
-            }
-
-            // Match KLS column (can be KLS, CLASS, KELAS, etc.)
-            if (strpos($header, 'KLS') !== false || strpos($header, 'KELAS') !== false || strpos($header, 'CLASS') !== false) {
-                $indices['kls'] = $index;
-            }
+            
+            $output = \Artisan::output();
+            
+            // Log the action
+            \Log::info($dryRun ? 'Year progression preview executed' : 'Year progression executed', [
+                'user' => auth()->user()->name,
+                'dry_run' => $dryRun,
+                'output' => $output
+            ]);
+            
+            $message = $dryRun 
+                ? 'Preview kenaikan tahun berhasil! Lihat log untuk detailnya.' 
+                : 'Kenaikan tahun berhasil diproses! Silakan cek data siswa.';
+            
+            return redirect()
+                ->route('admin.siswa.year-progression')
+                ->with('success', $message)
+                ->with('output', $output);
+                
+        } catch (\Exception $e) {
+            \Log::error('Year progression failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()
+                ->route('admin.siswa.year-progression')
+                ->with('error', 'Gagal memproses kenaikan tahun: ' . $e->getMessage());
         }
+    }
 
-        return $indices;
+    /**
+     * Bulk update repeat grade status
+     */
+    public function bulkUpdateRepeatGrade(Request $request)
+    {
+        return $this->tryCatchResponse(function () use ($request) {
+            $request->validate([
+                'student_ids' => 'required|array',
+                'student_ids.*' => 'exists:student,id_student',
+                'repeat_grade' => 'required|boolean',
+            ]);
+
+            $count = Siswa::whereIn('id_student', $request->student_ids)
+                ->update(['repeat_grade' => $request->repeat_grade]);
+
+            $status = $request->repeat_grade ? 'akan mengulang kelas' : 'akan naik kelas';
+            
+            return redirect()
+                ->route('admin.siswa.index')
+                ->with('success', "$count siswa berhasil ditandai $status!");
+        },
+        'Berhasil mengupdate status siswa', // Success message handled above
+        'Gagal mengupdate status siswa.',
+        'admin.siswa.index'
+        );
     }
 }

@@ -103,7 +103,7 @@
       @endif
 
       <!-- How It Works Card -->
-      <div class="row">
+      <div class="row mb-3">
         <div class="col-12">
           <div class="card" style="background-color: #d1ecf1; border-left: 4px solid #0dcaf0;">
             <div class="card-body">
@@ -121,7 +121,7 @@
       </div>
 
       <!-- Normal Import Form -->
-      <div class="row">
+      <div class="row mb-3">
         <div class="col-12">
           <div class="card" style="background-color: rgb(222, 220, 240);">
             <div class="card-header">
@@ -213,7 +213,7 @@
                   <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3"></label>
                   <div class="col-sm-12 col-md-7">
                     <button type="submit" class="dt dt-btn create">
-                      <i class="fas fa-file-import"></i> Import Sekarang
+                      <i class="fas fa-file-import me-2"></i> Import Sekarang
                     </button>
                     <a href="{{ route('admin.siswa.index') }}" class="btn btn-secondary">Batal</a>
                   </div>
@@ -225,7 +225,7 @@
       </div>
 
       <!-- Use Cases Examples -->
-      <div class="row">
+      <div class="row mb-3">
         <div class="col-12">
           <div class="card" style="background-color: rgb(222, 220, 240);">
             <div class="card-header">
