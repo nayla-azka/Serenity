@@ -162,6 +162,7 @@
 
 </style>
 
+@auth
 <div class="card shadow-lg mx-4" style="background: linear-gradient(rgba(167, 155, 233, 0.6), rgba(245, 186, 222, 0.6));">
   <div class="card-body" style="box-shadow: 10px 10px 8px #00000047;">
     <h2 class="mb-3 text-center" style="font-size: 25px">Profil Guru Bimbingan dan Konseling</h2><br>
@@ -205,7 +206,7 @@
                   @endif
               </div>
 
-              @auth
+
               <div class="contact-section mt-auto">
                   <p class="mb-0">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
@@ -215,16 +216,16 @@
                       <strong>Kontak:</strong> {{ $g->contact ?? '-' }}
                   </p>
               </div>
-              @endauth
+
           </div>
       </div>
     </div>
   </div>
 @endforeach
-
     </div>
   </div>
 </div>
+@endauth
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
