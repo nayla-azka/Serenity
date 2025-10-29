@@ -57,6 +57,25 @@
   margin-bottom: 0;
 }
 
+/* Responsive untuk HP */
+@media (max-width: 700px) {
+  .card-mini .card-body {
+    flex-direction: column; /* teks di atas, tombol di bawah */
+    text-align: center;     /* biar rapi tengah */
+    gap: 0.6rem;            /* kasih jarak antar elemen */
+  }
+
+  .card-mini p {
+    font-size: 0.8rem; /* sedikit lebih gede biar kebaca jelas di HP */
+  }
+
+  .btn-serenity {
+    width: 80%;        /* tombol full lebar di HP */
+    font-size: 0.75rem; /* sedikit lebih besar */
+    padding: 0.5em 1em;
+  }
+}
+
 </style>
 
 <br>
@@ -71,6 +90,6 @@
 
     <a href="/serenity/login" class="btn-serenity">Log In</a>
   </div>
-</div>
+</div><br>
 @endguest
 

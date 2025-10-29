@@ -1,6 +1,6 @@
 <style>
 .footer-mini {
-    background: linear-gradient(rgb(131, 122, 182), rgb(162, 122, 182));
+    background: linear-gradient(rgb(157, 147, 210), rgb(178, 145, 210));
     color: white;
     padding: 15px 0; /* lebih tipis */
     margin-top: auto;
@@ -43,6 +43,36 @@
     font-size: 0.6rem;
     border-top: 1px solid rgba(255,255,255,0.2);
     padding-top: 6px;
+}
+
+/* ========== RESPONSIVE FOOTER ========== */
+@media (max-width: 767px) {
+  .footer-container {
+    flex-direction: column;   /* jadi ke bawah */
+    align-items: flex-start;  /* teks tetap rata kiri */
+    text-align: left;
+    padding: 0 15px;          /* kasih jarak samping */
+  }
+
+  .footer-section {
+    min-width: 100%;          /* full width */
+    margin: 8px 0;            /* lebih renggang biar enak dibaca */
+  }
+
+  .footer-section h3 {
+    font-size: 0.9rem;        /* sedikit lebih besar di HP */
+  }
+
+  .footer-section p {
+    font-size: 0.75rem;       /* biar tetap terbaca jelas */
+    line-height: 1.4;
+  }
+
+  .footer-bottom {
+    font-size: 0.65rem;
+    margin-top: 15px;
+    padding-top: 8px;
+  }
 }
 
 </style>

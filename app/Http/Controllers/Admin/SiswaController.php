@@ -87,7 +87,7 @@ class SiswaController extends AdminBaseController
         do {
             $email = 'siswa_' . Str::random(12) . '@serenity.local';
         } while (User::where('email', $email)->exists());
-        
+
         return $email;
     }
 
@@ -108,7 +108,7 @@ class SiswaController extends AdminBaseController
         return $this->tryCatchResponse(function () use ($request) {
             set_time_limit(1800);
             ini_set('memory_limit', '2048M');
-            
+
             $request->validate([
                 'file' => 'required|file|mimes:xlsx,xls|max:10240',
                 'default_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -118,17 +118,17 @@ class SiswaController extends AdminBaseController
             $file = $request->file('file');
             $extension = $file->getClientOriginalExtension();
             $forceReplace = $request->boolean('force_replace', false);
-            
+
             // SMART YEAR GAP DETECTION
             // Check if Grade XII or XIII exists (indicates old data from previous year)
             $hasGradeXII = Siswa::whereHas('class', function($q) {
                 $q->where('class_name', 'LIKE', 'XII %');
             })->exists();
-            
+
             $hasGradeXIII = Siswa::whereHas('class', function($q) {
                 $q->where('class_name', 'LIKE', 'XIII %');
             })->exists();
-            
+
             // Count existing students by grade
             $existingStats = [
                 'grade_x' => Siswa::whereHas('class', function($q) {
@@ -144,20 +144,20 @@ class SiswaController extends AdminBaseController
                     $q->where('class_name', 'LIKE', 'XIII %');
                 })->count(),
             ];
-            
+
             // Quick peek at import file to detect what grades are being imported
             $readerPeek = \PhpOffice\PhpSpreadsheet\IOFactory::createReader($extension === 'xlsx' ? 'Xlsx' : 'Xls');
             $readerPeek->setReadDataOnly(true);
             $spreadsheetPeek = $readerPeek->load($file->getRealPath());
             $worksheetPeek = $spreadsheetPeek->getActiveSheet();
-            
+
             $importingGrades = [
                 'has_x' => false,
                 'has_xi' => false,
                 'has_xii' => false,
                 'has_xiii' => false,
             ];
-            
+
             // Check first 10 rows to detect grades
             $allKelasForPeek = Kelas::all()->keyBy('class_name');
             for ($peekRow = 2; $peekRow <= min(10, $worksheetPeek->getHighestRow()); $peekRow++) {
@@ -177,57 +177,57 @@ class SiswaController extends AdminBaseController
                     }
                 }
             }
-            
+
             $spreadsheetPeek->disconnectWorksheets();
             unset($spreadsheetPeek, $worksheetPeek);
-            
+
             // YEAR GAP DETECTION LOGIC
             // If importing Grade X but Grade XII/XIII exists = year gap likely
             $yearGapDetected = $importingGrades['has_x'] && ($hasGradeXII || $hasGradeXIII) && !$importingGrades['has_xi'] && !$importingGrades['has_xii'] && !$importingGrades['has_xiii'];
-            
+
             if ($yearGapDetected && !$forceReplace) {
                 \Log::warning('Year gap detected during import', [
                     'existing_stats' => $existingStats,
                     'importing_grades' => $importingGrades,
                     'user' => auth()->user()->name
                 ]);
-                
+
                 return redirect()
                     ->route('admin.siswa.import')
                     ->with('year_gap_warning', true)
                     ->with('existing_stats', $existingStats)
-                    ->with('warning', 
+                    ->with('warning',
                         'Terdeteksi siswa Grade XII/XIII masih ada di sistem (' . ($existingStats['grade_xii'] + $existingStats['grade_xiii']) . ' siswa). ' .
                         'Anda akan import siswa Grade X baru. ' .
                         'Sepertinya ada jeda tahun ajaran. Apakah Anda ingin menghapus semua data lama?'
                     );
             }
-            
+
             // If force replace, delete all old students
             if ($forceReplace) {
                 \Log::info('Force replacing all student data', [
                     'user' => auth()->user()->name,
                     'reason' => 'User confirmed year gap replacement'
                 ]);
-                
+
                 $oldStudents = Siswa::with('user')->get();
                 $deletedCount = $oldStudents->count();
-                
+
                 foreach ($oldStudents as $student) {
                     if ($student->photo && $student->photo !== 'default.jpg' && \Storage::disk('public')->exists($student->photo)) {
                         \Storage::disk('public')->delete($student->photo);
                     }
-                    
+
                     if ($student->user) {
                         $student->user->delete();
                     }
-                    
+
                     $student->delete();
                 }
-                
+
                 \Log::info("Deleted {$deletedCount} old students due to year gap replacement");
             }
-            
+
             // MAIN IMPORT LOGIC
             $imported = [];
             $errors = [];
@@ -245,16 +245,16 @@ class SiswaController extends AdminBaseController
                     $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader($readerType);
                     $reader->setReadDataOnly(true);
                     $reader->setReadEmptyCells(false);
-                    
+
                     $spreadsheet = $reader->load($file->getRealPath());
                     $worksheet = $spreadsheet->getActiveSheet();
-                    
+
                     $columnNIS = 1;
                     $columnNama = 2;
                     $columnKls = 4;
 
                     $highestRow = $worksheet->getHighestRow();
-                    
+
                     // Pre-load all classes and existing NIS
                     $allKelas = Kelas::all()->keyBy('class_name');
                     $existingNIS = Siswa::pluck('nis')->flip(); // Get all existing NIS in system
@@ -264,7 +264,7 @@ class SiswaController extends AdminBaseController
                     $validatedData = [];
                     \Log::info("Starting import: Total rows = " . $highestRow);
                     \Log::info("Existing NIS count in database: " . count($existingNIS));
-                    
+
                     // FIRST PASS: Validate and collect data
                     for ($rowNum = 2; $rowNum <= $highestRow; $rowNum++) {
                         try {
@@ -283,14 +283,14 @@ class SiswaController extends AdminBaseController
                                 $skippedErrors++;
                                 continue;
                             }
-                            
+
                             // Validation: Name required
                             if (empty($name)) {
                                 $errors[] = "Baris $rowNum: Nama kosong";
                                 $skippedErrors++;
                                 continue;
                             }
-                            
+
                             // Validation: Class required
                             if (empty($classInfo)) {
                                 $errors[] = "Baris $rowNum: Kelas kosong";
@@ -354,7 +354,7 @@ class SiswaController extends AdminBaseController
                         $password = $this->generatePassword();
                         $hashedPassword = Hash::make($password);
                         $email = $this->generateUniqueEmailInMemory($generatedEmails);
-                        
+
                         $usersToInsert[] = [
                             'name' => $data['name'],
                             'email' => $email,
@@ -388,51 +388,51 @@ class SiswaController extends AdminBaseController
                     // THIRD PASS: Bulk insert with transaction
                     if (!empty($usersToInsert) && !empty($studentsToInsert)) {
                         DB::beginTransaction();
-                        
+
                         try {
                             $chunkSize = 500;
-                            
+
                             // Insert users
                             \Log::info("Starting user insertion...");
                             foreach (array_chunk($usersToInsert, $chunkSize) as $chunkIndex => $chunk) {
                                 User::insert($chunk);
                                 \Log::info("Inserted user chunk " . ($chunkIndex + 1));
                             }
-                            
+
                             // Map users to students
                             \Log::info("Mapping users to students...");
                             $newUsers = User::whereIn('email', array_column($usersToInsert, 'email'))
                                 ->pluck('id', 'email')
                                 ->toArray();
-                            
+
                             foreach ($studentsToInsert as $key => &$student) {
                                 $userEmail = $student['email'];
-                                
+
                                 if (!isset($newUsers[$userEmail])) {
                                     \Log::error("User not found for email: $userEmail");
                                     unset($studentsToInsert[$key]);
                                     continue;
                                 }
-                                
+
                                 $student['user_id'] = $newUsers[$userEmail];
                                 unset($student['email']);
                             }
                             unset($student);
-                            
+
                             $studentsToInsert = array_values($studentsToInsert);
-                            
+
                             // Insert students
                             \Log::info("Starting student insertion...");
                             foreach (array_chunk($studentsToInsert, $chunkSize) as $chunkIndex => $chunk) {
                                 Siswa::insert($chunk);
                                 \Log::info("Inserted student chunk " . ($chunkIndex + 1));
                             }
-                            
+
                             DB::commit();
                             \Log::info("Transaction committed successfully");
-                            
+
                             $imported = array_values($passwordMap);
-                            
+
                         } catch (\Exception $e) {
                             DB::rollBack();
                             \Log::error('Bulk insert error: ' . $e->getMessage());
@@ -449,19 +449,19 @@ class SiswaController extends AdminBaseController
 
                     // Build success message
                     $message = count($imported) . " siswa baru berhasil diimport!";
-                    
+
                     if ($forceReplace) {
                         $message .= " Data siswa lama telah dihapus dan diganti.";
                     }
-                    
+
                     if (count($skippedDuplicates) > 0) {
                         $message .= " " . count($skippedDuplicates) . " siswa dilewati (NIS sudah terdaftar).";
                     }
-                    
+
                     if ($skippedErrors > 0) {
                         $message .= " " . $skippedErrors . " baris tidak valid.";
                     }
-                    
+
                     if (!empty($errors)) {
                         session(['import_errors' => $errors]);
                     }
@@ -492,7 +492,7 @@ class SiswaController extends AdminBaseController
         do {
             $email = 'siswa_' . Str::random(12) . '@serenity.local';
         } while (isset($generatedEmails[$email]));
-        
+
         $generatedEmails[$email] = true;
         return $email;
     }
@@ -540,12 +540,12 @@ class SiswaController extends AdminBaseController
             $columnLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($columnIndex + 1);
             $cellReference = $columnLetter . $rowNum;
             $cell = $worksheet->getCell($cellReference);
-            
+
             $value = $cell->getCalculatedValue();
             if ($value === null || $value === '') {
                 $value = $cell->getValue();
             }
-            
+
             return trim($value ?? '');
         } catch (\Exception $e) {
             \Log::error("Error reading cell $columnIndex:$rowNum - " . $e->getMessage());
@@ -560,11 +560,11 @@ class SiswaController extends AdminBaseController
     {
         $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         $password = '';
-        
+
         for ($i = 0; $i < $length; $i++) {
             $password .= $characters[rand(0, strlen($characters) - 1)];
         }
-        
+
         return $password;
     }
 
@@ -636,14 +636,14 @@ class SiswaController extends AdminBaseController
             $sheet->setCellValue('C' . $row, $student->student_name);
             $sheet->setCellValue('D' . $row, $student->class->class_name ?? '-');
             $sheet->setCellValue('E' . $row, $student->user->email ?? '-');
-            
+
             // Display actual password (stored in plain text in a separate field)
             // NOTE: If passwords are hashed, you'll need to track them separately
             $password = $student->user->plain_password ?? '[Encrypted - Cannot Display]';
             $sheet->setCellValueExplicit('F' . $row, $password, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-            
+
             $sheet->setCellValue('G' . $row, $student->created_at ? $student->created_at->format('d-M-Y H:i') : '-');
-            
+
             // Alternating row colors
             if ($row % 2 == 0) {
                 $sheet->getStyle('A' . $row . ':G' . $row)->applyFromArray([
@@ -653,7 +653,7 @@ class SiswaController extends AdminBaseController
                     ]
                 ]);
             }
-            
+
             $row++;
         }
 
@@ -675,18 +675,18 @@ class SiswaController extends AdminBaseController
             ->setBold(true)
             ->setSize(12)
             ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF0000'));
-        
+
         $warningRow++;
         $sheet->setCellValue('A' . $warningRow, '• File ini berisi PASSWORD SENSITIF - jangan bagikan ke pihak tidak berwenang');
         $sheet->setCellValue('A' . ($warningRow + 1), '• Simpan file ini di lokasi yang AMAN dan TERENKRIPSI');
         $sheet->setCellValue('A' . ($warningRow + 2), '• Hapus file ini setelah tidak dibutuhkan');
         $sheet->setCellValue('A' . ($warningRow + 3), '• Hanya KONSELOR yang boleh mengakses file ini');
-        
+
         $sheet->getStyle('A' . $warningRow . ':A' . ($warningRow + 3))->getFont()
             ->setItalic(true)
             ->setSize(10)
             ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF0000'));
-        
+
         foreach (range($warningRow, $warningRow + 3) as $r) {
             $sheet->mergeCells('A' . $r . ':G' . $r);
         }
@@ -743,7 +743,7 @@ class SiswaController extends AdminBaseController
             ['2', '0012345679', 'Jane Smith', 'P', 'X RPL 1'],
             ['3', '0012345680', 'Bob Johnson', 'L', 'X TKJ 2'],
         ];
-        
+
         $row = 2;
         foreach ($exampleData as $data) {
             foreach ($data as $colIndex => $value) {
