@@ -293,6 +293,45 @@
         transform: translateY(-3px); /* naik ke atas */
     }
 
+img.rounded-circle {
+    width: 40px !important;
+    height: 40px !important;
+    aspect-ratio: 1 / 1 !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+    display: inline-block !important; /* ganti block ke inline-block */
+    vertical-align: middle !important; /* biar sejajar */
+    flex-shrink: 0 !important; /* jangan ditarik flex */
+}
+
+.username-truncate {
+    display: inline-block;
+    max-width: 160px; /* sesuaikan panjangnya */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+.unread-badge {
+    background: linear-gradient(135deg, #dc3545, #e74c3c);
+    color: white;
+    border-radius: 50% !important;
+    width: 22px !important;
+    height: 22px !important;
+    aspect-ratio: 1 / 1 !important; /* jaga rasio 1:1 */
+    display: inline-flex !important; /* inline-flex biar gak ketarik parent flex */
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+    animation: pulse 2s infinite;
+    line-height: 1; /* biar teks ga dorong tinggi */
+    flex-shrink: 0; /* cegah flexbox narik bentuk */
+}
+
+
 </style>
 @endpush
 
@@ -345,7 +384,7 @@
                         $latestMsg = $s->latestMessage;
                         $preview = $latestMsg ? \Str::limit($latestMsg->message, 40) : 'Belum ada pesan';
                         $timeAgo = $latestMsg ? $latestMsg->sent_at->diffForHumans() : $s->created_at->diffForHumans();
-                        
+
                         // NEW: Get view status for student
                         $studentViewStatus = $s->getViewStatus('student', $s->id_student);
                     @endphp
@@ -364,7 +403,7 @@
                                     @endif
                                 </div>
                                 <div class="flex-grow-1 min-width-0">
-                                    <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center justify-content-between username-truncate">
                                         <strong class="text-truncate">{{ $studentName }}</strong>
                                         @if($s->unread_count > 0)
                                             <span class="unread-badge">{{ $s->unread_count }}</span>
@@ -852,9 +891,9 @@ function archiveSession(sessionId) {
 function deleteSession(sessionId) {
     @if(isset($session))
         const studentViewStatus = '{{ $session->getViewStatus("student", $session->id_student) }}';
-        
+
         let confirmMessage = 'Delete this session? ';
-        
+
         if (studentViewStatus === 'hidden') {
             confirmMessage += 'Since the student has already deleted it, this will PERMANENTLY DELETE the session and all messages from the database. This action cannot be undone.';
         } else {
@@ -866,7 +905,7 @@ function deleteSession(sessionId) {
 
     showConfirm(confirmMessage, function () {
         console.log('🗑️ Counselor deleting session:', sessionId);
-        
+
         $.ajax({
             url: adminChatRoutes.deleteSession(sessionId), // FIXED: Use route helper
             method: 'DELETE',
@@ -876,10 +915,10 @@ function deleteSession(sessionId) {
             },
             success: function(response) {
                 console.log('✅ Delete response:', response);
-                
+
                 if (response.success) {
                     showToast(response.message);
-                    
+
                     setTimeout(() => {
                         window.location.href = "{{ route('admin.konseling.index') }}";
                     }, 1500);
@@ -889,7 +928,7 @@ function deleteSession(sessionId) {
             },
             error: function(xhr) {
                 console.error('❌ Delete error:', xhr);
-                
+
                 let errorMsg = 'Failed to delete session';
                 try {
                     const errorResponse = JSON.parse(xhr.responseText);
@@ -926,7 +965,7 @@ function updateUnreadCount() {
             console.error('Error getting stats:', xhr.responseText);
         }
     });
-} 
+}
 
 setInterval(updateUnreadCount, 30000);
 </script>

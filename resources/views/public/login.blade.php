@@ -41,11 +41,11 @@
             @csrf
 
             <div class="mb-2">
-                <label style="font-size: 0.85rem;">Email</label>
-                <input type="email" name="email"
-                       class="form-control form-control-sm @error('email') is-invalid @enderror"
-                       value="{{ old('email') }}" required autofocus>
-                @error('email')
+                <label style="font-size: 0.85rem;">NIS</label>
+                <input type="text" name="nis"
+                       class="form-control form-control-sm @error('nis') is-invalid @enderror"
+                       value="{{ old('nis') }}" required autofocus>
+                @error('nis')
                     <div class="invalid-feedback" style="font-size: 0.75rem;">{{ $message }}</div>
                 @enderror
             </div>
@@ -59,6 +59,16 @@
                     <div class="invalid-feedback" style="font-size: 0.75rem;">{{ $message }}</div>
                 @enderror
             </div>
+
+            {{-- <div class="mb-2">
+                <label style="font-size: 0.85rem;">Email</label>
+                <input type="email" name="email"
+                       class="form-control form-control-sm @error('email') is-invalid @enderror"
+                       value="{{ old('email') }}" required autofocus>
+                @error('email')
+                    <div class="invalid-feedback" style="font-size: 0.75rem;">{{ $message }}</div>
+                @enderror
+            </div> --}}
 
             <div class="d-grid">
                 <button type="submit" class="btn btn-sm" style="background-color: #cac3f1;">
