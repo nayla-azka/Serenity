@@ -4,14 +4,92 @@
 <style>
     html, body {
         height: 100vh;
-        overflow: hidden;
         margin: 0 !important;
         padding: 0 !important;
-
     }
-/* Enhanced Chat System Styles */
-/* Add this CSS to your public templates where you use ChatHelper */
 
+    /* WhatsApp-like responsive behavior */
+    .chat-container {
+        background: #fafafa;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Desktop: show both */
+    @media (min-width: 768px) {
+        .chat-sidebar {
+            display: block !important;
+        }
+        .chat-main {
+            display: flex !important;
+        }
+    }
+
+    /* Mobile: toggle between sidebar and chat */
+    @media (max-width: 767.98px) {
+        .chat-container {
+            border-radius: 0 !important;
+        }
+
+        /* Default: show sidebar, hide chat */
+        .chat-sidebar {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .chat-main {
+            display: none;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* When chat is active: hide sidebar, show chat */
+        .chat-container.chat-active .chat-sidebar {
+            display: none;
+        }
+
+        .chat-container.chat-active .chat-main {
+            display: flex;
+        }
+
+        /* Back button for mobile */
+        .mobile-back-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            margin-right: 8px;
+            transition: background 0.2s;
+        }
+
+        .mobile-back-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .mobile-back-btn i {
+            font-size: 1.2rem;
+        }
+    }
+
+    /* Hide back button on desktop */
+    @media (min-width: 768px) {
+        .mobile-back-btn {
+            display: none !important;
+        }
+    }
+
+/* Enhanced Chat System Styles */
 .chat-bubble {
     border-radius: 1rem;
     max-width: 70%;
@@ -85,7 +163,6 @@
     border: 1px solid #dee2e6;
 }
 
-/* Chat box scrollbar styling */
 #chat-box::-webkit-scrollbar {
     width: 6px;
 }
@@ -99,7 +176,6 @@
     background: rgba(131,122,182,1);
 }
 
-/* Loading states */
 #send-btn {
     min-width: 60px;
     transition: all 0.3s ease;
@@ -116,18 +192,6 @@
     height: 1rem;
 }
 
-/* Chat container styling */
-.chat-container {
-    background: #fafafa;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    overflow: hidden;
-    height: 90vh;          /* full screen */
-    display: flex;
-    flex-direction: column;
-}
-
-/* Message alignment helpers */
 .d-flex {
     display: flex !important;
 }
@@ -160,7 +224,6 @@
     color: #dc3545 !important;
 }
 
-/* Success/Error message styling */
 #success-message, #error-message {
     padding: 0.75rem 1rem;
     margin-bottom: 1rem;
@@ -184,42 +247,11 @@
     display: none !important;
 }
 
-/* Font Awesome icons (if not already included) */
 .fas {
     font-family: "Font Awesome 5 Free";
     font-weight: 900;
 }
 
-.fa-check::before {
-    content: "\f00c";
-}
-
-.fa-check-double::before {
-    content: "\f560";
-}
-
-.fa-paper-plane::before {
-    content: "\f1d8";
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .chat-bubble {
-        max-width: 85%;
-        padding: 0.5rem 0.75rem;
-    }
-
-    .date-divider span {
-        padding: 0.375rem 0.75rem;
-        font-size: 0.75rem;
-    }
-
-    .message-meta {
-        font-size: 0.7rem;
-    }
-}
-
-/* Focus states for accessibility */
 input[name="message"]:focus {
     border-color: #837ab6;
     box-shadow: 0 0 0 0.2rem rgba(131, 122, 182, 0.25);
@@ -232,18 +264,16 @@ input[name="message"]:focus {
 .chat-main {
     display: flex;
     flex-direction: column;
-    height: 100%;           /* take all available space */
+    height: 100%;
 }
 
-/* Smooth scrolling for chat box */
 #chat-box {
     scroll-behavior: smooth;
-    flex-grow: 1;           /* expand to fill space between header and input */
-    overflow-y: auto;       /* scroll messages */
-    min-height: 0;          /* important fix for flexbox scroll areas */
+    flex-grow: 1;
+    overflow-y: auto;
+    min-height: 0;
 }
 
-/* Loading animation */
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
@@ -260,244 +290,238 @@ input[name="message"]:focus {
     animation: spin 0.75s linear infinite;
 }
 
-.spinner-border-sm {
-    width: 1rem;
-    height: 1rem;
-    border-width: 0.2em;
+.row.g-0, .col-3, .col-9 {
+    margin: 0;
+    padding: 0;
 }
-    .row.g-0, .col-3, .col-9 {
-        margin: 0;
-        padding: 0;
+
+footer {
+    display: none !important;
+}
+
+.session-ended-banner {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+    animation: slideDown 0.5s ease-out;
+}
+
+.session-ended-banner .badge {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+    margin-bottom: 0.5rem;
+    border-radius: 15px;
+}
+
+.session-ended-banner p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.95;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
     }
-
-    footer {
-        display: none !important;
+    to {
+        transform: translateY(0);
+        opacity: 1;
     }
+}
 
-     /* FIXED: Session ended banner */
-        .session-ended-banner {
-            background: linear-gradient(135deg, #dc3545, #c82333);
-            color: white;
-            padding: 1rem;
-            text-align: center;
-            flex-shrink: 0;
-            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
-            animation: slideDown 0.5s ease-out;
-        }
+.new-session-area {
+    background: #f8f9fa;
+    border-top: 2px solid #dee2e6;
+    padding: 2rem;
+    text-align: center;
+    animation: fadeIn 0.5s ease-out;
+}
 
-        .session-ended-banner .badge {
-            background: rgba(255, 255, 255, 0.2) !important;
-            color: white !important;
-            font-size: 0.85rem;
-            padding: 0.4rem 0.8rem;
-            margin-bottom: 0.5rem;
-            border-radius: 15px;
-        }
-
-        .session-ended-banner p {
-            margin: 0;
-            font-size: 0.9rem;
-            opacity: 0.95;
-        }
-
-    @keyframes slideDown {
-        from {
-            transform: translateY(-100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
-
-    .new-session-area {
-        background: #f8f9fa;
-        border-top: 2px solid #dee2e6;
-        padding: 2rem;
-        text-align: center;
-        animation: fadeIn 0.5s ease-out;
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
+}
 
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
+.new-session-btn {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    border: none;
+    color: white;
+    padding: 0.8rem 2rem;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
 
-    .new-session-btn {
-        background: linear-gradient(135deg, #007bff, #0056b3);
-        border: none;
-        color: white;
-        padding: 0.8rem 2rem;
-        border-radius: 50px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-    }
+.new-session-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+    color: white;
+}
 
-    .new-session-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
-        color: white;
-    }
+.session-option-card {
+    border: 2px solid #dee2e6;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
 
-    .session-option-card {
-        border: 2px solid #dee2e6;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
+.session-option-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.5s;
+}
 
-    .session-option-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-        transition: left 0.5s;
-    }
+.session-option-card:hover {
+    border-color: #007bff;
+    background-color: #f8f9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.1);
+}
 
-    .session-option-card:hover {
-        border-color: #007bff;
-        background-color: #f8f9ff;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.1);
-    }
+.session-option-card:hover::before {
+    left: 100%;
+}
 
-    .session-option-card:hover::before {
-        left: 100%;
-    }
+.session-option-card.selected {
+    border-color: #007bff;
+    background-color: #e7f3ff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
 
-    .session-option-card.selected {
-        border-color: #007bff;
-        background-color: #e7f3ff;
-        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
-    }
+.option-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    display: block;
+}
 
-    .option-icon {
-        font-size: 2rem;
-        margin-bottom: 1rem;
-        display: block;
-    }
+.text-warning { color: #ffc107 !important; }
 
-    .text-warning { color: #ffc107 !important; }
-    .text-danger { color: #dc3545 !important; }
+.dropdown-menu {
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 0.375rem;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    z-index: 1050 !important;
+    position: absolute !important;
+}
 
-    /* FIXED: Dropdown menu styling for student */
-    .dropdown-menu {
-        border: 1px solid rgba(0,0,0,0.15);
-        border-radius: 0.375rem;
-        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
-        z-index: 1050 !important;
-        position: absolute !important;
-    }
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    color: #212529;
+    text-decoration: none;
+}
 
-    .dropdown-item {
-        padding: 0.5rem 1rem;
-        transition: all 0.2s ease;
-        border: none;
-        background: transparent;
-        width: 100%;
-        text-align: left;
-        color: #212529;
-        text-decoration: none;
-    }
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+    color: #16181b;
+}
 
-    .dropdown-item:hover {
-        background-color: #f8f9fa;
-        color: #16181b;
-    }
+.dropdown-item.text-danger {
+    color: #dc3545 !important;
+}
 
-    .dropdown-item.text-danger {
-        color: #dc3545 !important;
-    }
+.dropdown-item.text-danger:hover {
+    background-color: #f5c6cb;
+    color: #721c24 !important;
+}
 
-    .dropdown-item.text-danger:hover {
-        background-color: #f5c6cb;
-        color: #721c24 !important;
-    }
+.dropdown {
+    position: relative;
+}
 
-    /* Ensure dropdown positioning */
-    .dropdown {
-        position: relative;
-    }
+.dropdown-toggle::after {
+    display: inline-block;
+    margin-left: 0.255em;
+    vertical-align: 0.255em;
+    content: "";
+    border-top: 0.3em solid;
+    border-right: 0.3em solid transparent;
+    border-bottom: 0;
+    border-left: 0.3em solid transparent;
+}
 
-    .dropdown-toggle::after {
-        display: inline-block;
-        margin-left: 0.255em;
-        vertical-align: 0.255em;
-        content: "";
-        border-top: 0.3em solid;
-        border-right: 0.3em solid transparent;
-        border-bottom: 0;
-        border-left: 0.3em solid transparent;
-    }
-    .bg-chat {
+.bg-chat {
     color: rgb(248, 246, 255) !important;
     background-color: #663c71 !important;
 }
+
 .bg-chat2 {
-        background: linear-gradient(rgb(235, 232, 255), rgb(252, 251, 255)) !important;
+    background: linear-gradient(rgb(235, 232, 255), rgb(252, 251, 255)) !important;
 }
 
 .bg-chat3 {
-        background: rgb(131, 122, 182) !important;
+    background: rgb(131, 122, 182) !important;
 }
-    .quick-reply-btn {
-        transition: all 0.2s ease;
-    }
-    .quick-reply-btn:hover {
-        background-color: #837ab6 !important;
-        color: white !important;
-        transform: scale(1.05);
-    }
 
-    .dt-btn.send:hover {
-        color: #fff;
-        transform: scale(1.05);
-        outline: 1.5px solid #a89ad9;
-    }
+.quick-reply-btn {
+    transition: all 0.2s ease;
+}
 
-    .dt-btn.send{
-        display: inline-block;
-        position: relative;
-        overflow: hidden;
-        color: #f8f6ff;
-        background-color: rgb(131, 122, 182);
-        transition: all 400ms;
-        text-decoration: none;
-    }
+.quick-reply-btn:hover {
+    background-color: #837ab6 !important;
+    color: white !important;
+    transform: scale(1.05);
+}
 
-    .dt-btn.send::before {
-        content: "";
-        position: absolute;
-        left: -40px;
-        top: 0;
-        width: 0;
-        height: 100%;
-        background-color: #6b61a4;
-        transform: skewX(45deg);
-        z-index: -1;
-        transition: width 400ms;
-    }
+.dt-btn.send:hover {
+    color: #fff;
+    transform: scale(1.05);
+    outline: 1.5px solid #a89ad9;
+}
 
-    .dt-btn.send:hover::before {
-        width: 200%;
-    }
+.dt-btn.send {
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+    color: #f8f6ff;
+    background-color: rgb(131, 122, 182);
+    transition: all 400ms;
+    text-decoration: none;
+}
 
-    /* Bulat hijau status aktif di kanan bawah foto profil konselor */
+.dt-btn.send::before {
+    content: "";
+    position: absolute;
+    left: -40px;
+    top: 0;
+    width: 0;
+    height: 100%;
+    background-color: #6b61a4;
+    transform: skewX(45deg);
+    z-index: -1;
+    transition: width 400ms;
+}
+
+.dt-btn.send:hover::before {
+    width: 200%;
+}
+
 .counselor-status-dot {
     position: absolute;
     bottom: 0;
@@ -511,176 +535,125 @@ input[name="message"]:focus {
 }
 
 .unread-badge {
-  background-color: rgb(131, 122, 182); /* warna ungu lembut */
-  color: #fff; /* angka putih */
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 6px; /* jarak dari elemen sebelumnya */
-  box-shadow: 0 0 6px rgba(131, 122, 182, 0.5); /* efek glow halus opsional */
+    background-color: rgb(131, 122, 182);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 6px;
+    box-shadow: 0 0 6px rgba(131, 122, 182, 0.5);
 }
 
-@media (max-width: 576px) {
-  .unread-badge {
-    width: 18px;
-    height: 18px;
-    font-size: 11px;
-  }
-}
-/* Add these media queries to your existing styles */
-
-/* Mobile devices (portrait phones, less than 768px) */
 @media (max-width: 767.98px) {
-    /* Make sidebar take full width on mobile */
-    .chat-container .col-3 {
-        flex: 0 0 100%;
-        max-width: 100%;
-    }
 
-    .chat-container .col-9 {
-        flex: 0 0 100%;
-        max-width: 100%;
+    .chat-container.chat-active ~ nav,
+    nav:has(+ .chat-container.chat-active) {
+        display: none !important;
     }
-
-    /* Reduce padding in session items */
     .session-item .p-3 {
-        padding: 0.1rem !important;
+        padding: 0.75rem !important;
     }
 
-    /* Smaller avatar */
     .session-item img.rounded-circle {
-        width: 32px !important;
-        height: 32px !important;
+        width: 40px !important;
+        height: 40px !important;
     }
 
-    /* Reduce header padding */
-    .chat-container .p-3.border-bottom {
-        padding: 0.1rem !important;
-    }
-
-    /* Smaller font sizes */
     .session-item strong {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
     }
 
     .session-preview {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
 
     .session-item small {
-        font-size: 0.7rem;
+        font-size: 0.75rem;
     }
 
-    /* Reduce stats bar padding */
     .p-2.bg-light.border-bottom {
         padding: 0.5rem !important;
     }
 
-    /* Smaller badges */
     .unread-badge {
         width: 18px;
         height: 18px;
-        font-size: 10px;
+        font-size: 11px;
     }
 
-    .student-deleted-indicator,
-    .student-archived-indicator {
-        font-size: 0.65rem;
-        padding: 0.25rem 0.5rem;
+    .chat-bubble {
+        max-width: 85%;
+        padding: 0.5rem 0.75rem;
     }
 
-    /* Reduce status indicator size */
-    .online-status,
-    .offline-status {
-        width: 8px;
-        height: 8px;
-    }
-}
-
-/* Small devices (landscape phones, 576px to 767px) */
-@media (min-width: 576px) and (max-width: 767.98px) {
-    .session-item .p-3 {
-        padding: 1rem !important;
+    /* Default sembunyikan chat-main di mobile */
+    .chat-main {
+        display: none !important;
     }
 
-    .session-item img.rounded-circle {
-        width: 36px !important;
-        height: 36px !important;
-    }
-}
-
-/* Tablets (768px to 991px) */
-@media (min-width: 768px) and (max-width: 991.98px) {
-    /* Reduce sidebar width on tablets */
-    .chat-container .col-3 {
-        flex: 0 0 35%;
-        max-width: 35%;
-    }
-
-    .chat-container .col-9 {
-        flex: 0 0 65%;
-        max-width: 65%;
-    }
-
-    /* Slightly reduce padding */
-    .session-item .p-3 {
-        padding: 1.5rem !important;
-    }
-
-    .session-item img.rounded-circle {
-        width: 36px !important;
-        height: 36px !important;
-    }
-}
-
-@media (max-width: 767.98px) {
-  .chat-header-responsive,
-  .chat-main > .p-3.border-bottom {
-    padding: 1rem 1rem !important;
-  }
-  .chat-header-responsive h6,
-  .chat-main > .p-3.border-bottom h6 {
-    font-size: 0.9rem !important;
-    margin-bottom: -3px !important;
-  }
-  .chat-header-responsive small,
-  .chat-main > .p-3.border-bottom small {
-    font-size: 0.55rem !important;
-  }
-  .chat-header-responsive .badge,
-  .chat-main > .p-3.border-bottom .badge {
-    font-size: 0.55rem !important;
-    padding: 0.35rem 0.8rem !important;
-  }
-}
-
-@media (max-width: 576px) {
-    /* Bungkus kanan (badge dan tombol) jadi kolom saat mobile */
-    .chat-header-right {
-        display: flex;
+    /* Kalau aktif, tampilkan chat dan sembunyikan sidebar */
+    .chat-container.chat-active .chat-main {
+        display: flex !important;
         flex-direction: column;
-        align-items: flex-end;
-        gap: 0.4rem;
+        height: 100vh;
     }
 
-    /* Biar Delete Session tampil rapi */
-    .chat-header-right .dropdown-item.text-danger {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.8rem;
-        text-align: right;
+    .chat-container.chat-active .chat-sidebar {
+        display: none !important;
     }
 
-    /* Badge biar nggak terlalu besar di HP */
-    .chat-header-right .badge {
-        font-size: 0.75rem !important;
-        padding: 0.3rem 0.6rem !important;
+    /* Pastikan chat box scroll di tengah, input nempel bawah */
+    #chat-box {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        background-color: #f9f9f9;
+    }
+
+    .p-3.border-top.bg-white.flex-shrink-0 {
+        position: sticky;
+        bottom: 0;
+        background-color: #fff;
+        border-top: 1px solid #ddd;
+        padding: 10px;
+    }
+
+    /* Full height container */
+    .chat-container {
+        height: 100vh !important;
+        overflow: hidden;
+    }
+
+    /* Sidebar scrollable */
+    .chat-sidebar {
+        height: 100vh;
+        overflow-y: auto;
     }
 }
+
+.unread-badge {
+    background: linear-gradient(135deg, #dc3545, #e74c3c);
+    color: white;
+    border-radius: 50% !important;
+    width: 22px !important;
+    height: 22px !important;
+    aspect-ratio: 1 / 1 !important; /* jaga rasio 1:1 */
+    display: inline-flex !important; /* inline-flex biar gak ketarik parent flex */
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+    animation: pulse 2s infinite;
+    line-height: 1; /* biar teks ga dorong tinggi */
+    flex-shrink: 0; /* cegah flexbox narik bentuk */
+}
+
 
 </style>
 
@@ -688,10 +661,15 @@ input[name="message"]:focus {
 @endpush
 
 @section('content')
-<div class="chat-container bg-chat2" style="border-radius: 0% !important;">
+
+{{-- @php
+    $isChatActive = request()->has('session'); // misal ?session=3
+@endphp --}}
+
+<div class="chat-container bg-chat2 {{ isset($session) ? 'chat-active' : '' }}" style="border-radius: 0% !important;">
     <div class="row h-100 g-0">
         <!-- Sidebar - Counselor List -->
-        <div class="col-3 rounded-0 border-end chat-sidebar">
+        <div class="col-md-3 col-12 rounded-0 border-end chat-sidebar">
             <!-- Header -->
             <div class="p-3 rounded-0 bg-chat3 text-white">
                 <div class="d-flex justify-content-between align-items-center">
@@ -701,11 +679,11 @@ input[name="message"]:focus {
                         </h6>
                         <small class="opacity-75">{{ Auth::user()->name ?? 'Siswa' }}</small>
                     </div>
-                    <button class="dt dt-btn create" type="button" >
-                            <a class="dropdown-item" href="{{ route('public.konseling.archive-list') }}">
-                                <i class="bi bi-archive"></i>
-                            </a>
-                        </button>
+                    <button class="dt dt-btn create" type="button">
+                        <a class="dropdown-item" href="{{ route('public.konseling.archive-list') }}">
+                            <i class="bi bi-archive"></i>
+                        </a>
+                    </button>
                 </div>
             </div>
 
@@ -752,14 +730,14 @@ input[name="message"]:focus {
                             <div class="d-flex align-items-start">
                                 <div class="position-relative me-3">
                                     <img src="{{ asset('storage/' . $c->photo) }}"
-                                         class="rounded-circle" width="35" height="35" style="object-fit:cover;"
-                                         onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2235%22 height=%2235%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23ddd%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22>👤</text></svg>'">
+                                         class="rounded-circle" width="45" height="45" style="object-fit:cover;"
+                                         onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2245%22 height=%2245%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23ddd%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22>👤</text></svg>'">
                                     @if($activeSession && $activeSession->is_active)
                                         <span class="counselor-status-dot"></span>
                                     @endif
                                 </div>
                                 <div class="flex-grow-1 min-width-0">
-                                    <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center justify-content-between position-relative">
                                         <strong class="text-truncate">{{ $c->counselor_name }}</strong>
                                         @if($unreadCount > 0)
                                             <span class="unread-badge">{{ $unreadCount }}</span>
@@ -784,7 +762,7 @@ input[name="message"]:focus {
         </div>
 
         <!-- Chat Area -->
-        <div class="col-9 chat-main p-2">
+        <div class="col-md-9 col-12 chat-main p-2">
             @if(isset($session))
                 @php
                     $counselorName = $session->counselor->counselor_name ?? 'Unknown Counselor';
@@ -795,6 +773,9 @@ input[name="message"]:focus {
                 <!-- Chat Header -->
                 <div class="p-3 border-bottom bg-white d-flex align-items-center justify-content-between flex-shrink-0">
                     <div class="d-flex align-items-center">
+                        <button class="btn btn-link text-dark d-md-none me-2" onclick="goBackToSidebar()" style="font-size: 1.2rem;">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
                         <img src="{{ asset('storage/' . $session->counselor->photo) }}"
                             class="rounded-circle me-3" width="40" height="40" style="object-fit:cover;"
                             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23ddd%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22>👤</text></svg>'">
@@ -803,6 +784,7 @@ input[name="message"]:focus {
                             <small class="text-muted">{{ $counselorClass }} • Topik: {{ $session->topic }}</small>
                         </div>
                     </div>
+
                     <div class="d-flex gap-2 chat-header-right">
                         @if($isPreviewMode)
                             <span class="badge bg-info">
@@ -817,20 +799,12 @@ input[name="message"]:focus {
                                 <i class="fas fa-stop-circle me-1"></i>
                                 Session Ended
                             </span>
-                            @if($session->canBeDeletedByCounselor())
-                                <a class="dropdown-item text-danger" href="#" onclick="deleteSession({{ $session->id_session }})">
-                                    <i class="fas fa-trash me-2"></i>Delete Session
-                                    @if($session->deleted_by_student)
-                                        <small class="text-muted">(Will permanently delete)</small>
-                                    @endif
-                                </a>
-                            @endif
                         @endif
                     </div>
                 </div>
 
                 @if($isPreviewMode)
-                    <!-- Preview Mode State -->
+                    <!-- Preview Mode (same as before) -->
                     <div id="chat-box" class="flex-grow-1">
                         <div class="preview-chat-area p-2">
                             <div class="preview-content">
@@ -840,24 +814,17 @@ input[name="message"]:focus {
                                 </h5>
 
                                 @if($session->welcome_message)
-                                    <!-- Show static preview of welcome message -->
                                     <div class="d-flex justify-content-start mb-3">
                                         <div class="chat-bubble received preview">
                                             <div>{{ $session->welcome_message }}</div>
                                             <span class="preview-badge"></span>
                                         </div>
                                     </div>
-                                @else
-                                    <div class="text-muted small">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        No welcome message configured for this counselor
-                                    </div>
                                 @endif
                             </div>
                         </div>
                     </div>
 
-                    <!-- Input for Preview Mode -->
                     <div class="p-3 border-top bg-white flex-shrink-0">
                         <form id="chat-form" class="d-flex mb-2">
                             @csrf
@@ -877,7 +844,6 @@ input[name="message"]:focus {
                             </button>
                         </form>
 
-                        <!-- Quick Start Messages -->
                         <div class="d-flex flex-wrap gap-1">
                             <small class="text-muted me-2 align-self-center">Quick Start:</small>
                             <button class="btn btn-sm btn-outline-secondary quick-reply-btn" onclick="insertQuickMessage('Halo, saya ingin berkonsultasi dengan Anda.')">
@@ -890,7 +856,7 @@ input[name="message"]:focus {
                     </div>
 
                 @elseif(isset($session->is_active) && !$session->is_active)
-                    <!-- Ended Session State -->
+                    <!-- Ended Session (same as before) -->
                     <div class="session-ended-banner">
                         <div class="badge bg-light text-dark mb-2">
                             <i class="fas fa-info-circle me-1"></i>
@@ -919,7 +885,7 @@ input[name="message"]:focus {
                     </div>
 
                 @else
-                    <!-- Active Session State -->
+                    <!-- Active Session (same as before) -->
                     <div id="chat-box" class="flex-grow-1">
                         <div id="loading" class="text-center text-muted">
                             <div class="spinner-border spinner-border-sm me-2" role="status"></div>
@@ -961,7 +927,7 @@ input[name="message"]:focus {
 
             @else
                 <!-- Empty State -->
-                <div class="d-flex flex-column align-items-center justify-content-center h-100">
+                <div class="d-none d-lg-flex flex-column align-items-center justify-content-center h-100">
                     <div class="text-center text-muted">
                         <div class="mb-3">
                             <i class="fas fa-comments fa-3x text-primary"></i>
@@ -1061,6 +1027,39 @@ input[name="message"]:focus {
 
 <script>
 
+//     document.addEventListener('DOMContentLoaded', function () {
+//     const chatContainer = document.querySelector('.chat-container');
+//     const sessionItems = document.querySelectorAll('.session-item');
+//     const backButtons = document.querySelectorAll('.btn.btn-link.text-dark.d-md-none');
+
+//     // Default: selalu mulai di sidebar
+//     chatContainer.classList.remove('chat-active');
+
+//     // Saat klik konselor → buka chat
+//     sessionItems.forEach(item => {
+//         item.addEventListener('click', () => {
+//             chatContainer.classList.add('chat-active');
+//         });
+//     });
+
+//     // Saat klik tombol kembali → balik ke sidebar
+//     backButtons.forEach(btn => {
+//         btn.addEventListener('click', () => {
+//             chatContainer.classList.remove('chat-active');
+//         });
+//     });
+// });
+
+//     document.querySelectorAll('.session-item').forEach(item => {
+//     item.addEventListener('click', () => {
+//         document.querySelector('.chat-container').classList.add('chat-active');
+//     });
+// });
+
+// function goBackToSidebar() {
+//     document.querySelector('.chat-container').classList.remove('chat-active');
+// }
+
 // FIXED: Use Laravel route helpers to generate proper URLs
 const chatRoutes = {
     send: "{{ route('public.konseling.send') }}",
@@ -1136,7 +1135,7 @@ function setupPreviewMode() {
         // If session already created, send via existing session
         if (hasCreatedSession && activeSessionId) {
             console.log('✅ Session exists, sending message to:', activeSessionId);
-            
+
             isProcessing = true;
             $('#send-btn').prop('disabled', true);
             $('#send-icon').hide();
@@ -1159,14 +1158,14 @@ function setupPreviewMode() {
                 },
                 success: function(response) {
                     console.log('✅ Message sent:', response);
-                    
+
                     messageInput.val('');
-                    
+
                     let messageToDisplay = response;
                     if (response.messages && Array.isArray(response.messages)) {
                         messageToDisplay = response.messages[0];
                     }
-                    
+
                     if (chatHelperInstance && messageToDisplay) {
                         chatHelperInstance.appendMessage(messageToDisplay, 'student');
                         chatHelperInstance.scrollToBottom();
@@ -1243,7 +1242,7 @@ function setupPreviewMode() {
                         // FIXED: Use proper route generation
                         const newUrl = "{{ url('serenity/konseling/session') }}/" + response.session_id;
                         window.history.replaceState({}, '', newUrl);
-                        
+
                         $('#chat-form').find('input[name="id_counselor"]').remove();
                         $('#chat-form').prepend('<input type="hidden" name="id_session" value="' + response.session_id + '">');
                         $('.badge.bg-info').removeClass('bg-info').addClass('bg-success').html('<i class="fas fa-circle"></i> Aktif');
@@ -1294,10 +1293,10 @@ function initializeRealTimeChat(sessionId, chatHelperInstance) {
     if (channel) {
         channel.bind('message.sent', (data) => {
             console.log('📨 New message via Pusher:', data);
-            
+
             if (data.sender_type !== 'student') {
                 chatHelperInstance.appendMessage(data, 'student');
-                
+
                 if (chatHelperInstance.isPageVisible && chatHelperInstance.isScrolledToBottom()) {
                     setTimeout(() => chatHelperInstance.markMessagesAsRead(), 500);
                 }
@@ -1376,15 +1375,15 @@ function createNewSession() {
         },
         success: function(response) {
             console.log('✅ New session response:', response);
-            
+
             if (response.success) {
                 $('#newSessionModal').modal('hide');
-                
+
                 const action = selectedOption === 'keep' ? 'archived' : 'deleted';
                 showToast(`Session ${action} successfully. Starting fresh...`);
-                
+
                 console.log('🔄 Redirecting to:', response.redirect_url);
-                
+
                 setTimeout(() => {
                     window.location.href = response.redirect_url;
                 }, 1000);
@@ -1396,13 +1395,13 @@ function createNewSession() {
         },
         error: function(xhr, status, error) {
             console.error('❌ Error creating new session:', xhr);
-            
+
             let errorMessage = 'Failed to create new session';
-            
+
             try {
                 const response = JSON.parse(xhr.responseText);
                 errorMessage = response.message || response.error || errorMessage;
-                
+
                 if (response.errors) {
                     const errorDetails = Object.values(response.errors).flat().join(', ');
                     errorMessage += ': ' + errorDetails;
@@ -1418,7 +1417,7 @@ function createNewSession() {
                     errorMessage = 'Server error. Please try again or contact support.';
                 }
             }
-            
+
             showToast(errorMessage);
             $('#confirmBtn').prop('disabled', false).html('<i class="fas fa-check me-1"></i> Konfirmasi');
         }
@@ -1429,7 +1428,7 @@ function deleteSession(sessionId) {
     let confirmMessage = 'Delete this session? It will be removed from your view.';
     showConfirm(confirmMessage, function () {
         console.log('🗑️ Student deleting session:', sessionId);
-        
+
         $.ajax({
             url: chatRoutes.deleteSession(sessionId), // FIXED: Use route helper
             method: 'DELETE',
@@ -1439,10 +1438,10 @@ function deleteSession(sessionId) {
             },
             success: function(response) {
                 console.log('✅ Delete response:', response);
-                
+
                 if (response.success) {
                     showToast(response.message);
-                    
+
                     setTimeout(() => {
                         window.location.href = "{{ route('public.konseling.index') }}";
                     }, 1500);
@@ -1452,7 +1451,7 @@ function deleteSession(sessionId) {
             },
             error: function(xhr) {
                 console.error('❌ Delete error:', xhr);
-                
+
                 let errorMsg = 'Failed to delete session';
                 try {
                     const errorResponse = JSON.parse(xhr.responseText);
@@ -1496,6 +1495,13 @@ $('#newSessionModal').on('hidden.bs.modal', function() {
     selectedOption = null;
     $('#confirmBtn').prop('disabled', true).html('<i class="fas fa-check me-1"></i> Konfirmasi');
 });
+
+    function goBackToSidebar() {
+        // Khusus mobile: tampilkan sidebar dan sembunyikan area chat
+        const chatContainer = document.querySelector('.chat-container');
+        chatContainer.classList.remove('chat-active');
+        window.scrollTo(0, 0); // biar balik ke atas
+    }
 </script>
 @endif
 @endpush

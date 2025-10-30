@@ -234,7 +234,7 @@ html, body {
                                             <img src="{{ asset('storage/' . $lain->photo) }}"
                                                 alt="{{ $lain->title }}"
                                                 class="img-fluid rounded-start"
-                                                style="height:80px; width:100%; object-fit: cover;">
+                                                style="height:100%; width:100%; object-fit: cover;">
                                         </div>
                                     @endif
                                     <div class="col-8">
@@ -403,19 +403,19 @@ document.addEventListener("DOMContentLoaded", function() {
         if (!window.location.hash || !window.location.hash.startsWith('#comment-')) {
             return;
         }
-        
+
         const commentId = window.location.hash.replace('#comment-', '');
         console.log('Looking for comment:', commentId);
-        
+
         function tryHighlight() {
             const el = document.querySelector('#comment-' + commentId);
-            
+
             if (el) {
                 console.log('Found element, highlighting');
                 setTimeout(function() {
                     el.scrollIntoView({ behavior: "smooth", block: "center" });
                     el.classList.add("highlight-comment");
-                    
+
                     setTimeout(function() {
                         el.style.transition = 'all 1s ease';
                         el.classList.remove("highlight-comment");
@@ -425,19 +425,19 @@ document.addEventListener("DOMContentLoaded", function() {
             }
             return false;
         }
-        
+
         // If comments not loaded, load them first
         if (!commentsLoaded) {
             console.log('Loading comments...');
             if (loadInitialCommentsFunc) {
                 loadInitialCommentsFunc();
             }
-            
+
             // Simple polling - just look for the element
             let attempts = 0;
             const checkInterval = setInterval(function() {
                 attempts++;
-                
+
                 if (tryHighlight()) {
                     clearInterval(checkInterval);
                 } else if (attempts >= 50) {
@@ -449,7 +449,7 @@ document.addEventListener("DOMContentLoaded", function() {
             tryHighlight();
         }
     }
-    
+
     highlightCommentFromHash();
     window.addEventListener('hashchange', highlightCommentFromHash);
 });
@@ -737,14 +737,14 @@ $(document).on('click', '.load-replies-btn', function(e) {
 
         if ($repliesContainer.hasClass('d-none')) {
             $repliesContainer.removeClass('d-none');
-            $btn.find('.replies-text').text('Sembunyikan balasan');
+            $btn.find('.replies-text').text('Sembunyikan');
 
             const existingReplies = $(`.comment-item[data-parent-id="${commentId}"]`);
 
             if (existingReplies.length === 0) {
                 // Prevent multiple clicks
                 if ($btn.hasClass('loading')) return;
-                
+
                 setLoading($btn, true);
 
                 $.ajax({
@@ -759,12 +759,12 @@ $(document).on('click', '.load-replies-btn', function(e) {
                             if (window.location.hash && window.location.hash.startsWith('#comment-')) {
                                 const targetId = window.location.hash.replace('#comment-', '');
                                 const targetEl = document.querySelector('#comment-' + targetId);
-                                
+
                                 if (targetEl) {
                                     setTimeout(function() {
                                         targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
                                         targetEl.classList.add("highlight-comment");
-                                        
+
                                         setTimeout(function() {
                                             targetEl.style.transition = 'all 1s ease';
                                             targetEl.classList.remove("highlight-comment");

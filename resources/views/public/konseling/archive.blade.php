@@ -108,6 +108,53 @@
         box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
         background: linear-gradient(135deg, #c82333, #bd2130);
     }
+
+    /* Default desktop: tetap 4 kolom seperti biasa */
+.stats-card .row.text-center > [class*="col-"] {
+    border-right: 1px solid rgba(0,0,0,0.1);
+}
+.stats-card .row.text-center > [class*="col-"]:last-child {
+    border-right: none;
+}
+
+@media (max-width: 767.98px) {
+    .stats-card .row.text-center {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 0.5rem; /* jarak antar item makin rapat */
+        justify-content: flex-start;
+        padding: 0.25rem 0.5rem;
+        border: none;
+    }
+
+    .stats-card .row.text-center > [class*="col-"] {
+        flex: 0 0 auto;
+        min-width: auto;
+        border: none;
+        padding: 0;
+        text-align: center; /* bisa juga left kalau kamu mau */
+    }
+
+    .stats-card .row.text-center h3 {
+        font-size: 0.95rem;
+        margin-bottom: 0.1rem;
+        line-height: 1.1;
+    }
+
+    .stats-card .row.text-center small {
+        font-size: 0.7rem;
+        opacity: 0.8;
+        white-space: nowrap;
+    }
+
+    .stats-card .row.text-center::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+
 </style>
 @endpush
 
@@ -136,32 +183,33 @@
     </div>
 </div>
 
-    @if($archivedSessions->count() > 0)
-    <div class="row">
-        <div class="col-12">
-            <div class="stats-card">
-                <div class="row text-center">
-                    <div class="col-md-3">
-                        <h3 class="mb-0">{{ $archivedSessions->count() }}</h3>
-                        <small class="opacity-75">Total Arsip</small>
-                    </div>
-                    <div class="col-md-3">
-                        <h3 class="mb-0">{{ $archivedSessions->sum('total_messages') ?: '0' }}</h3>
-                        <small class="opacity-75">Total Pesan</small>
-                    </div>
-                    <div class="col-md-3">
-                        <h3 class="mb-0">{{ $archivedSessions->unique('id_counselor')->count() }}</h3>
-                        <small class="opacity-75">Konselor</small>
-                    </div>
-                    <div class="col-md-3">
-                        <h3 class="mb-0">{{ $archivedSessions->where('archived_at', '>=', now()->subDays(30))->count() }}</h3>
-                        <small class="opacity-75">Bulan Ini</small>
-                    </div>
+@if($archivedSessions->count() > 0)
+<div class="row">
+    <div class="col-12">
+        <div class="stats-card text-center">
+            <div class="row g-2 g-md-0"> {{-- g-2 biar rapet di mobile --}}
+                <div class="col-6 col-md-3">
+                    <h3 class="mb-0">{{ $archivedSessions->count() }}</h3>
+                    <small class="opacity-75">Total Arsip</small>
+                </div>
+                <div class="col-6 col-md-3">
+                    <h3 class="mb-0">{{ $archivedSessions->sum('total_messages') ?: '0' }}</h3>
+                    <small class="opacity-75">Total Pesan</small>
+                </div>
+                <div class="col-6 col-md-3">
+                    <h3 class="mb-0">{{ $archivedSessions->unique('id_counselor')->count() }}</h3>
+                    <small class="opacity-75">Konselor</small>
+                </div>
+                <div class="col-6 col-md-3">
+                    <h3 class="mb-0">{{ $archivedSessions->where('archived_at', '>=', now()->subDays(30))->count() }}</h3>
+                    <small class="opacity-75">Bulan Ini</small>
                 </div>
             </div>
         </div>
     </div>
-    @endif
+</div>
+@endif
+
 
     <div class="row">
         @if($archivedSessions->count() > 0)
@@ -275,10 +323,10 @@ function deleteArchive(sessionId) {
                     card.style.transition = 'all 0.3s ease';
                     card.style.opacity = '0';
                     card.style.transform = 'scale(0.8)';
-                    
+
                     setTimeout(() => {
                         card.remove();
-                        
+
                         // Check if no more archives
                         const remainingCards = document.querySelectorAll('[id^="archive-card-"]');
                         if (remainingCards.length === 0) {
@@ -306,7 +354,7 @@ function showToast(message, type = 'info') {
     toast.style.zIndex = '9999';
     toast.textContent = message;
     document.body.appendChild(toast);
-    
+
     setTimeout(() => {
         toast.remove();
     }, 3000);

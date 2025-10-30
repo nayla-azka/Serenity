@@ -150,8 +150,33 @@
   visibility: visible;
 }
 
+.username-truncate {
+    display: inline-block;
+    max-width: 80px; /* sesuaikan panjangnya */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+
 /* ================= MOBILE RESPONSIVE ================= */
 @media (max-width: 991.98px) {
+.notification-dropdown-menu {
+    top: 60px; /* sesuaikan dengan tinggi navbar kamu */
+    left: 5 !important;
+    right: 0 !important;
+    height: 50vh; /* biar penuh layar */
+    width: 30vh;
+    max-width: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
+    border-radius: 0;
+    z-index: 1055;
+    transform: none !important;
+    background-color: #fff; /* pastiin ada background */
+  }
+
   .custom-navbar .container {
     display: flex;
     flex-direction: column;
@@ -340,7 +365,7 @@
 
                     <!-- User -->
                     <div class="dropdown">
-                        <a class="nav-link dropdown-toggle fw-bold text-white" href="#" id="navbarDropdownMobile"
+                        <a class="nav-link dropdown-toggle fw-bold text-white username-truncate" href="#" id="navbarDropdownMobile"
                            role="button" data-bs-toggle="dropdown" aria-expanded="false">
                            {{ Auth::user()->name }}
                         </a>
@@ -481,7 +506,7 @@ class PublicNotificationSystem {
 
     init() {
         if (this.initialized) return;
-        
+
         console.log('Initializing public notification system...');
         this.setupEventListeners();
         this.fetchNotifications();
@@ -574,7 +599,7 @@ class PublicNotificationSystem {
         this.notifications.unshift(notification);
         this.updateBadges();
         this.updateNotificationCountText();
-    
+
         if (dropdownOpened) {
             this.renderNotifications();
         }
@@ -622,7 +647,7 @@ class PublicNotificationSystem {
 
     renderNotifications() {
         const lists = document.querySelectorAll('.notification-list');
-        
+
         lists.forEach(list => {
             // Remove loading indicator
             const loading = list.querySelector('.loading-notifications');
@@ -662,7 +687,7 @@ class PublicNotificationSystem {
                 <div class="me-2 mt-1">
                     ${this.getNotificationIcon(notification.type)}
                 </div>
-                <div class="notification-clickable-area flex-grow-1" 
+                <div class="notification-clickable-area flex-grow-1"
                      style="cursor: ${hasUrl ? 'pointer' : 'default'}">
                     <div class="notification-message mb-1">${this.safeHtml(notification.message)}</div>
                     <small class="text-muted">
@@ -736,7 +761,7 @@ class PublicNotificationSystem {
         const totalCount = this.notifications.length;
         const unreadCount = this.notifications.filter(n => !n.read).length;
         const readCount = totalCount - unreadCount;
-        
+
         const countText = document.getElementById('public-notification-count-text');
         if (countText) {
             if (totalCount === 0) {
@@ -819,7 +844,7 @@ class PublicNotificationSystem {
                 this.updateBadges();
                 this.updateNotificationCountText();
                 this.renderNotifications();
-                
+
                 if (typeof window.showToast === 'function') {
                     window.showToast('Notifikasi berhasil dihapus.');
                 }
@@ -975,7 +1000,7 @@ class PublicNotificationSystem {
                 </div>
             `;
         });
-        
+
         const countText = document.getElementById('public-notification-count-text');
         if (countText) {
             countText.textContent = 'Gagal memuat';

@@ -19,7 +19,7 @@ html, body {
         overflow: hidden;
         border-radius: 12px;
     }
-    
+
     .mobile-compact-card img {
         width: 110px;
         height: 110px;
@@ -27,7 +27,7 @@ html, body {
         flex-shrink: 0;
         border-radius: 8px 0 0 8px;
     }
-    
+
     .mobile-compact-card .card-body {
         padding: 0.875rem;
         flex: 1;
@@ -35,60 +35,60 @@ html, body {
         flex-direction: column;
         justify-content: center;
     }
-    
+
     .mobile-compact-card .card-title {
         font-size: 0.95rem;
         font-weight: 600;
         margin-bottom: 0.4rem;
         line-height: 1.3;
     }
-    
+
     .mobile-compact-card .card-text {
         font-size: 0.8rem;
         margin-bottom: 0;
         line-height: 1.4;
         opacity: 0.9;
     }
-    
+
     /* Featured article mobile adjustments */
     .featured-card-mobile {
         margin-bottom: 1rem;
         border-radius: 12px;
         overflow: hidden;
     }
-    
+
     .featured-card-mobile img {
         height: 180px !important;
         width: 100%;
         object-fit: cover;
         border-radius: 12px 12px 0 0;
     }
-    
+
     .featured-card-mobile .featured-content {
         padding: 1rem !important;
     }
-    
+
     .featured-card-mobile h2 {
         font-size: 1.2rem;
         margin-bottom: 0.4rem;
     }
-    
+
     .featured-card-mobile p {
         font-size: 0.85rem;
         line-height: 1.5;
     }
-    
+
     .featured-card-mobile .text-muted {
         font-size: 0.75rem;
         margin-bottom: 0.4rem;
     }
-    
+
     /* Latest articles section mobile */
     .latest-section-mobile {
         border-radius: 12px;
         padding: 1rem !important;
     }
-    
+
     .latest-section-mobile h3 {
         font-size: 1.25rem;
         margin-bottom: 1rem;
@@ -101,11 +101,11 @@ html, body {
         border-radius: 12px;
         overflow: hidden;
     }
-    
+
     .card img {
         border-radius: 0;
     }
-    
+
     .featured-card-mobile .col-md-5 img {
         border-radius: 12px 0 0 12px;
         max-height: 280px;
@@ -121,10 +121,10 @@ html, body {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.card:hover {
+/* .card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-}
+} */
 
 .card img {
     transition: transform 0.3s ease;
@@ -169,10 +169,10 @@ html, body {
                         </div>
                     </div>
                 </div>
-                
+
                 {{-- Mobile compact layout --}}
                 <div class="col-12 d-md-none px-2">
-                    <div class="card mobile-compact-card shadow-sm" style="background: rgba(167, 155, 233, 0.3);">
+                    <div class="card mobile-compact-card shadow-sm">
                         <a href="{{ route('public.artikel_show', $artikel->article_id) }}">
                             <img src="{{ asset('storage/' . $artikel->photo) }}"
                                  alt="{{ $artikel->title }}">
@@ -222,8 +222,9 @@ html, body {
                                 <p class="text-muted mb-2 mb-md-3" style="font-size: 0.85rem;">by: {{ $featured->author->name ?? 'Unknown' }}</p>
                                 <p class="mb-3" style="font-size: 0.9rem;">{{ Str::limit(strip_tags($featured->content), 150) }}</p>
                                 <div>
-                                    <a href="{{ route('public.artikel_show', $featured->article_id) }}" 
-                                       class="btn btn-dark btn-sm px-4 rounded-pill">
+                                    <a href="{{ route('public.artikel_show', $featured->article_id) }}"
+                                       class="btn-serenity px-4 rounded-pill"
+                                       style="text-decoration:none; text-align:center;">
                                         Read More
                                     </a>
                                 </div>
@@ -242,7 +243,7 @@ html, body {
                     @forelse($latest as $artikel)
                         {{-- Desktop layout --}}
                         <div class="col-12 col-md-6 col-lg-4 mb-1 d-none d-md-block">
-                            <div class="card bg-serenity h-100 shadow-sm kartubaru" style="background: linear-gradient(135deg, rgba(167, 155, 233, 0.75), rgba(167, 155, 233, 0.65)) !important;">
+                            <div class="card h-100 shadow-sm kartubaru" style="background: #250e2ca9 !important;">
                                 <a href="{{ route('public.artikel_show', $artikel->article_id) }}">
                                     <img src="{{ asset('storage/' . $artikel->photo) }}"
                                         class="card-img-top"
@@ -251,7 +252,7 @@ html, body {
                                 </a>
                                 <div class="card-body">
                                     <h5 class="card-title">
-                                        <a href="{{ route('public.artikel_show', $artikel->article_id) }}" 
+                                        <a href="{{ route('public.artikel_show', $artikel->article_id) }}"
                                            class="text-decoration-none text-white fw-semibold">
                                             {{ Str::limit($artikel->title, 60) }}
                                         </a>
@@ -265,17 +266,17 @@ html, body {
                                 </div>
                             </div>
                         </div>
-                        
+
                         {{-- Mobile compact layout --}}
                         <div class="col-12 d-md-none px-1">
-                            <div class="card mobile-compact-card shadow-sm" style="background: linear-gradient(135deg, rgba(167, 155, 233, 0.75), rgba(167, 155, 233, 0.65));">
+                            <div class="card mobile-compact-card shadow-sm" style="background: #250e2ca9;">
                                 <a href="{{ route('public.artikel_show', $artikel->article_id) }}">
                                     <img src="{{ asset('storage/' . $artikel->photo) }}"
                                          alt="{{ $artikel->title }}">
                                 </a>
                                 <div class="card-body">
                                     <h5 class="card-title">
-                                        <a href="{{ route('public.artikel_show', $artikel->article_id) }}" 
+                                        <a href="{{ route('public.artikel_show', $artikel->article_id) }}"
                                            class="text-decoration-none text-white fw-semibold">
                                             {{ Str::limit($artikel->title, 50) }}
                                         </a>
