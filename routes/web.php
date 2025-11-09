@@ -159,6 +159,8 @@ Route::prefix('serenity')->name('public.')->middleware(['auth'])->group(function
         Route::get('/archive', [ChatController::class, 'viewArchive'])->name('archive-list');
         Route::get('/archive/{sessionId}', [ChatController::class, 'showArchive'])->name('archive.show');
         Route::delete('/archive/{sessionId}', [ChatController::class, 'deleteArchivedSession'])->name('archive.delete');
+
+         Route::get('/stats', [ChatController::class, 'getSessionStats'])->name('stats');
     });
 });
 
@@ -209,7 +211,7 @@ Route::prefix('admin')->middleware(['admin.auth', 'track.visits'])->name('admin.
     // Konselor-only routes
     Route::middleware(['role:konselor'])->group(function () {
         // Siswa CRUD
-        Route::resource('siswa', AdminSiswa::class);
+        Route::resource('siswa', AdminSiswa::class)->except(['show']);;
 
          // Import routes
         Route::get('siswa-import', [AdminSiswa::class, 'showImportForm'])->name('siswa.import');

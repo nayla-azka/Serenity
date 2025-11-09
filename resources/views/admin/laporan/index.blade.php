@@ -147,10 +147,6 @@
                       <p><strong>Kronologi:</strong></p>
                       <div id="modal-selesai-chronology" style="white-space: pre-wrap;"></div>
                     </div>
-
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                    </div>
                   </div>
                 </div>
               </div>

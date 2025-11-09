@@ -8,25 +8,18 @@ use App\Models\Kelas;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class StudentYearProgression extends Command
 {
-    protected $signature = 'students:progress-year {--dry-run : Preview changes without executing}';
+    protected $signature = 'students:progress-year';
     protected $description = 'Progress students to next year (handles repeating students & KA Grade XIII)';
 
     public function handle()
     {
-        $dryRun = $this->option('dry-run');
-        
-        if ($dryRun) {
-            $this->warn('🔍 DRY RUN MODE - No changes will be made');
-        }
-        
         $this->info('Starting student year progression...');
 
-        if (!$dryRun) {
-            DB::beginTransaction();
-        }
+        DB::beginTransaction();
 
         try {
             $progressedCount = 0;
@@ -47,9 +40,8 @@ class StudentYearProgression extends Command
                 if ($student->repeat_grade) {
                     $this->comment("Repeating: {$student->student_name} (NIS: {$student->nis}) - Stays in {$student->class->class_name}");
                     
-                    if (!$dryRun) {
-                        $student->update(['repeat_grade' => false]);
-                    }
+                    // Reset repeat_grade flag
+                    $student->update(['repeat_grade' => false]);
                     
                     $repeatingCount++;
                     continue;
@@ -58,52 +50,46 @@ class StudentYearProgression extends Command
                 $currentClass = $student->class->class_name;
                 $normalizedClass = preg_replace('/\s+/', ' ', trim($currentClass));
                 
+                // Parse class name with more flexible pattern
+                // Matches: "XII RPL 1", "XII RPL", "X TKJ 2", "XIII KA", etc.
                 if (preg_match('/^(X{1,3}I{0,3})\s+([A-Z]+)\s*(\d*)$/i', $normalizedClass, $matches)) {
                     $grade = strtoupper($matches[1]); // X, XI, XII, XIII
-                    $major = strtoupper($matches[2]); // RPL, TKJ, KA.
+                    $major = strtoupper($matches[2]); // RPL, TKJ, KA
                     $classNumber = $matches[3] ?? '';
+                    
+                    $this->comment("Processing: {$student->student_name} | Grade: {$grade} | Major: {$major} | Class: {$currentClass}");
                 } else {
                     $this->warn("Cannot parse class name: {$currentClass} for student {$student->nis}");
                     $skippedCount++;
                     continue;
                 }
 
-                // Handle graduation
-                $isGraduated = $this->isGraduated($grade, $major);
+                // Check if student will graduate (is in final year)
+                $willGraduate = $this->willGraduate($grade, $major);
 
-                if ($isGraduated) {
-                    $graduationDate = $student->updated_at;
-                    $oneYearAgo = now()->subYear();
-
-                    if ($graduationDate->lt($oneYearAgo)) {
-                        if (!$dryRun) {
-                            $user = $student->user;
-                            
-                            if ($student->photo && $student->photo !== 'default.jpg' && \Storage::disk('public')->exists($student->photo)) {
-                                \Storage::disk('public')->delete($student->photo);
-                            }
-                            
-                            $student->delete();
-                            if ($user) {
-                                $user->delete();
-                            }
-                        }
-                        
+                if ($willGraduate) {
+                    try {
+                        $this->deleteGraduatingStudent($student);
                         $deletedCount++;
-                        $this->info("Deleted: {$student->student_name} (NIS: {$student->nis}) - Graduated over 1 year ago");
-                        continue;
-                    } else {
-                        $this->comment("Skipped: {$student->student_name} - Already graduated");
+                        $this->info("Deleted (Graduated): {$student->student_name} (NIS: {$student->nis}) - Was in {$currentClass}");
+                    } catch (\Exception $e) {
+                        $this->error("Failed to delete student {$student->nis}: " . $e->getMessage());
+                        Log::error("Failed to delete graduating student", [
+                            'student_id' => $student->id_student,
+                            'nis' => $student->nis,
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
+                        ]);
                         $skippedCount++;
-                        continue;
                     }
+                    continue;
                 }
 
                 // Progress to next grade
                 $nextGrade = $this->getNextGrade($grade, $major);
                 
                 if (!$nextGrade) {
-                    $this->comment("Skipped: {$student->student_name} - At final grade");
+                    $this->comment("Skipped: {$student->student_name} - At final grade but not graduated yet");
                     $skippedCount++;
                     continue;
                 }
@@ -112,6 +98,7 @@ class StudentYearProgression extends Command
                 $nextClassName = $nextGrade . ' ' . $major . ($classNumber ? ' ' . $classNumber : '');
                 $nextClass = Kelas::where('class_name', $nextClassName)->first();
 
+                // Fallback: try without class number
                 if (!$nextClass && $classNumber) {
                     $nextClassNameAlt = $nextGrade . ' ' . $major;
                     $nextClass = Kelas::where('class_name', 'LIKE', $nextClassNameAlt . '%')
@@ -119,6 +106,7 @@ class StudentYearProgression extends Command
                         ->first();
                 }
 
+                // Fallback: try fuzzy match
                 if (!$nextClass) {
                     $nextClass = Kelas::where('class_name', 'LIKE', $nextGrade . ' ' . $major . '%')
                         ->orderBy('class_name')
@@ -126,9 +114,7 @@ class StudentYearProgression extends Command
                 }
 
                 if ($nextClass) {
-                    if (!$dryRun) {
-                        $student->update(['class_id' => $nextClass->id_class]);
-                    }
+                    $student->update(['class_id' => $nextClass->id_class]);
                     $progressedCount++;
                     $this->info("Progressed: {$student->student_name} from {$currentClass} to {$nextClass->class_name}");
                 } else {
@@ -137,25 +123,17 @@ class StudentYearProgression extends Command
                 }
             }
 
-            if (!$dryRun) {
-                DB::commit();
-            }
+            DB::commit();
 
             $this->newLine();
             $this->info('=== Summary ===');
             $this->info("Students progressed: {$progressedCount}");
             $this->info("Students repeating grade: {$repeatingCount}");
-            $this->info("Students deleted: {$deletedCount}");
+            $this->info("Students deleted (graduated): {$deletedCount}");
             $this->info("Students skipped: {$skippedCount}");
             $this->info("Total processed: " . $students->count());
             $this->newLine();
-            
-            if ($dryRun) {
-                $this->warn('This was a DRY RUN - no actual changes were made');
-                $this->info('Run without --dry-run flag to execute changes');
-            } else {
-                $this->info('Year progression completed successfully!');
-            }
+            $this->info('Year progression completed successfully!');
 
             Log::info('Student year progression completed', [
                 'progressed' => $progressedCount,
@@ -163,16 +141,13 @@ class StudentYearProgression extends Command
                 'deleted' => $deletedCount,
                 'skipped' => $skippedCount,
                 'total' => $students->count(),
-                'dry_run' => $dryRun,
                 'date' => now()->toDateTimeString()
             ]);
 
             return Command::SUCCESS;
 
         } catch (\Exception $e) {
-            if (!$dryRun) {
-                DB::rollBack();
-            }
+            DB::rollBack();
             
             $this->error('Error during year progression: ' . $e->getMessage());
             $this->error($e->getTraceAsString());
@@ -187,49 +162,111 @@ class StudentYearProgression extends Command
     }
 
     /**
+     * Delete graduating student and all related data
+     */
+    private function deleteGraduatingStudent($student)
+    {
+        $user = $student->user;
+        $studentNIS = $student->nis;
+        $studentName = $student->student_name;
+        
+        // CRITICAL: Delete in correct order to avoid foreign key constraint violations
+        
+        // 1. Delete chat-related records first (deepest dependencies)
+        $chatSessions = DB::table('chat_sessions')
+            ->where('id_student', $student->id_student)
+            ->get();
+        
+        foreach ($chatSessions as $session) {
+            // Delete chat messages
+            DB::table('chat_messages')
+                ->where('id_session', $session->id_session)
+                ->delete();
+            
+            // Delete session views
+            DB::table('session_views')
+                ->where('id_session', $session->id_session)
+                ->delete();
+            
+            // Delete chat session
+            DB::table('chat_sessions')
+                ->where('id_session', $session->id_session)
+                ->delete();
+        }
+        
+        // 2. Delete student's photo if exists
+        if ($student->photo && $student->photo !== 'default.jpg' && Storage::disk('public')->exists($student->photo)) {
+            Storage::disk('public')->delete($student->photo);
+        }
+        
+        // 3. Delete student record (this should cascade to related tables)
+        $student->delete();
+        
+        // 4. Delete user record and let cascading handle the rest
+        // These will cascade automatically based on your schema:
+        // - article_views (ON DELETE SET NULL)
+        // - articles (ON DELETE CASCADE) 
+        // - comment_replies (ON DELETE CASCADE)
+        // - comment_reports (ON DELETE CASCADE/SET NULL)
+        // - comments (ON DELETE CASCADE)
+        // - likes (ON DELETE CASCADE)
+        // - reports (ON DELETE SET NULL)
+        // - visits (ON DELETE CASCADE)
+        if ($user) {
+            $user->delete();
+        }
+    }
+
+    /**
      * Get next grade level (handles KA Grade XIII)
      */
     private function getNextGrade($currentGrade, $major)
     {
+        $currentGrade = strtoupper($currentGrade);
+        $major = strtoupper($major);
+        
         // Special handling for KA major (has Grade XIII)
         if ($major === 'KA') {
             $gradeMapKA = [
                 'X' => 'XI',
                 'XI' => 'XII',
                 'XII' => 'XIII',
-                'XIII' => null, // Final grade for KA
+                'XIII' => null, // Graduated
             ];
-            return $gradeMapKA[strtoupper($currentGrade)] ?? null;
+            return $gradeMapKA[$currentGrade] ?? null;
         }
         
-        // Standard 3-year programs (RPL, TKJ.)
+        // Standard 3-year programs (RPL, TKJ)
         $gradeMap = [
             'X' => 'XI',
             'XI' => 'XII',
-            'XII' => null, // Final grade
-            'XIII' => null, // Should not happen for non-KA
+            'XII' => null, // Graduated
         ];
 
-        return $gradeMap[strtoupper($currentGrade)] ?? null;
+        return $gradeMap[$currentGrade] ?? null;
     }
 
     /**
-     * Check if student is graduated (handles KA Grade XIII)
+     * Check if student will graduate this year (is currently in final grade)
+     * Students in XII (RPL/TKJ) or XIII (KA) will be graduated
      */
-    private function isGraduated($grade, $major)
+    private function willGraduate($grade, $major)
     {
+        $grade = strtoupper($grade);
+        $major = strtoupper($major);
+        
         $supportedMajors = ['RPL', 'TKJ', 'KA'];
         
         if (!in_array($major, $supportedMajors)) {
             return false;
         }
         
-        // KA graduates at Grade XIII
+        // KA students graduate when they're in XIII (4-year program)
         if ($major === 'KA') {
             return $grade === 'XIII';
         }
         
-        // Other majors graduate at Grade XII
+        // RPL and TKJ students graduate when they're in XII (3-year programs)
         return $grade === 'XII';
     }
 }

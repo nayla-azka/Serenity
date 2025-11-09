@@ -196,9 +196,9 @@ document.addEventListener("DOMContentLoaded", function () {
         
         // Confirm
         const action = $('select[name="repeat_grade"]').val() == '1' ? 'MENGULANG KELAS' : 'NAIK KELAS NORMAL';
-        if (confirm(`Tandai ${selectedStudents.size} siswa sebagai ${action}?\n\nSiswa yang mengulang tidak akan naik kelas otomatis.`)) {
+        showConfirm(`Tandai ${selectedStudents.size} siswa sebagai ${action}?\n\nSiswa yang mengulang tidak akan naik kelas otomatis.`, () => {
             this.submit();
-        }
+        });
     });
 });
 </script>

@@ -388,12 +388,14 @@ document.addEventListener("DOMContentLoaded", function() {
         element.className = `notification-item border-bottom position-relative ${notification.read ? 'read' : 'unread'}`;
         element.dataset.id = notification.id;
         
+        const hasUrl = notification.url && notification.url !== 'null' && notification.url !== 'undefined' && notification.url !== '';
+        
         element.innerHTML = `
             <div class="d-flex align-items-start p-3">
                 <div class="me-2 mt-1">
                     ${getNotificationIcon(notification.type)}
                 </div>
-                <div class="notification-clickable-area flex-grow-1" data-url="${notification.url || ''}" data-id="${notification.id}">
+                <div class="notification-clickable-area flex-grow-1" style="cursor: pointer;" data-url="${notification.url || ''}" data-id="${notification.id}">
                     <div class="notification-message mb-1">${safeHtml(notification.message)}</div>
                     <small class="text-muted">
                         <i class="fas fa-clock me-1"></i>${safeHtml(notification.time)}
@@ -412,28 +414,28 @@ document.addEventListener("DOMContentLoaded", function() {
         
         const clickableArea = element.querySelector('.notification-clickable-area');
         if (clickableArea) {
-            const url = clickableArea.dataset.url;
-            if (url && url !== 'null' && url !== 'undefined' && url !== '') {
-                console.log('Adding click handler for notification:', notification.id, 'URL:', url);
-                clickableArea.style.cursor = 'pointer';
+            clickableArea.addEventListener('click', function(e) {
+                console.log('Notification clickable area clicked!');
+                e.preventDefault();
+                e.stopPropagation();
                 
-                clickableArea.addEventListener('click', function(e) {
-                    console.log('Notification clickable area clicked!');
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const clickUrl = this.dataset.url;
-                    const clickId = this.dataset.id;
-                    
-                    console.log('Redirecting to URL:', clickUrl, 'ID:', clickId);
-                    
-                    if (clickUrl && clickId) {
-                        redirectToNotification(clickUrl, clickId);
-                    }
-                });
-            } else {
-                console.log('No valid URL for notification:', notification.id);
-            }
+                // Don't do anything if already read
+                if (notification.read) {
+                    return;
+                }
+                
+                const clickUrl = this.dataset.url;
+                const clickId = this.dataset.id;
+                
+                console.log('URL:', clickUrl, 'ID:', clickId);
+                
+                if (hasUrl) {
+                    redirectToNotification(clickUrl, clickId);
+                } else {
+                    // Mark as read without redirecting
+                    markNotificationAsReadOnly(clickId);
+                }
+            });
         }
         
         const deleteBtn = element.querySelector('.delete-btn');
@@ -726,6 +728,61 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         });
     };
+
+    function markNotificationAsReadOnly(notificationId) {
+        console.log('Marking notification as read only:', notificationId);
+
+        // Update UI immediately
+        const item = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
+        if (item) {
+            item.style.transition = 'all 0.3s ease';
+            item.classList.remove('unread');
+            item.classList.add('read');
+            const badge = item.querySelector(".badge.bg-primary");
+            if (badge) {
+                badge.classList.remove('bg-primary');
+                badge.classList.add('bg-secondary');
+                badge.textContent = 'Dibaca';
+            }
+        }
+
+        // Update notification in array
+        const notification = notifications.find(n => n.id === notificationId);
+        if (notification) {
+            notification.read = true;
+            notification.isNew = false;
+        }
+
+        updateBadge();
+        updateNotificationCountText();
+
+        // Mark as read in backend
+        fetch('/serenity/notifications/mark-read', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': getCSRFToken()
+            },
+            body: JSON.stringify({ notification_ids: [notificationId] })
+        })
+        .then(response => {
+            console.log('Mark-read response status:', response.status);
+            if (!response.ok) {
+                throw new Error('Failed to mark as read');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Mark-read response data:', data);
+            if (data.success || data.status === 'success') {
+                showToast('Notifikasi ditandai sebagai dibaca');
+            }
+        })
+        .catch(error => {
+            console.error('Mark-read failed:', error);
+            showToast('Gagal menandai notifikasi sebagai dibaca');
+        });
+    }
 
     window.redirectToNotification = function(url, notificationId) {
         console.log('=== REDIRECT NOTIFICATION START ===');

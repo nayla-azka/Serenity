@@ -707,7 +707,6 @@ class SiswaController extends AdminBaseController
         $writer->save('php://output');
         exit;
     }
-
     /**
      * Download Excel template for import
      */
@@ -717,9 +716,11 @@ class SiswaController extends AdminBaseController
         $sheet = $spreadsheet->getActiveSheet();
 
         // Set simplified header (5 columns only)
-        $headers = ['No Absen', 'NIS', 'Nama', 'L/P', 'Kls'];
+        $headers = ['No Absen', 'NIS', 'NAMA SISWA', 'L/P', 'KLS'];
+        $headerColumns = ['A', 'B', 'C', 'D', 'E'];
+        
         foreach ($headers as $index => $header) {
-            $sheet->setCellValueByColumnAndRow($index + 1, 1, $header);
+            $sheet->setCellValue($headerColumns[$index] . '1', $header);
         }
 
         // Style header
@@ -734,15 +735,17 @@ class SiswaController extends AdminBaseController
         // Add example data (3 rows)
         $exampleData = [
             ['1', '0012345678', 'John Doe', 'L', 'X RPL 1'],
-            ['2', '0012345679', 'Jane Smith', 'P', 'X RPL 1'],
+            ['2', '0012345679', 'Jane Smith', 'P', 'X KA 1'],
             ['3', '0012345680', 'Bob Johnson', 'L', 'X TKJ 2'],
         ];
 
         $row = 2;
-        foreach ($exampleData as $data) {
-            foreach ($data as $colIndex => $value) {
-                $sheet->setCellValueByColumnAndRow($colIndex + 1, $row, $value);
-            }
+        foreach ($exampleData as $rowData) {
+            $sheet->setCellValue('A' . $row, $rowData[0]);
+            $sheet->setCellValue('B' . $row, $rowData[1]);
+            $sheet->setCellValue('C' . $row, $rowData[2]);
+            $sheet->setCellValue('D' . $row, $rowData[3]);
+            $sheet->setCellValue('E' . $row, $rowData[4]);
             $row++;
         }
 
@@ -755,20 +758,19 @@ class SiswaController extends AdminBaseController
         // Add instructions
         $instructionRow = 6;
         $sheet->setCellValue('A' . $instructionRow, 'INSTRUKSI IMPORT (FORMAT BARU - DISEDERHANAKAN):');
-        $sheet->getStyle('A' . $instructionRow)->getFont()->setBold(true)->setSize(12)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF0000'));
+        $sheet->getStyle('A' . $instructionRow)->getFont()->setBold(true)->setSize(12)->getColor()->setRGB('FF0000');
         $sheet->mergeCells('A' . $instructionRow . ':E' . $instructionRow);
 
         $instructions = [
-            '1. Format baru menggunakan 5 kolom sederhana: No Absen (A), NIS (B), Nama (C), L/P (D), Kls (E)',
-            '2. Kolom yang WAJIB diisi: NIS, Nama, dan Kls',
+            '1. Format menggunakan 5 kolom: No Absen (A), NIS (B), NAMA SIWA (C), L/P (D), KLS (E)',
+            '2. Kolom yang WAJIB diisi: NIS, NAMA SISWA, dan KLS',
             '3. Kolom No Absen dan L/P opsional (tidak diproses)',
             '4. NIS harus unik dan belum terdaftar',
-            '5. Nama kelas harus sesuai dengan database (contoh: X RPL 1, X TKJ 2, XI RPL 1)',
+            '5. Nama kelas harus sesuai dengan database (contoh: X RPL 1, X KA 2, XI TKJ 1)',
             '6. Hapus baris contoh (baris 2-4) sebelum upload data sesungguhnya',
             '7. Header harus tetap di baris 1, data dimulai dari baris 2',
             '8. Password akan digenerate otomatis dan dapat didownload setelah import',
-            '9. Gunakan filter "Grade X Only" untuk import siswa baru saja',
-            '10. Format file: .xlsx atau .xls (maksimal 10MB)',
+            '9. Format file: .xlsx atau .xls (maksimal 10MB)',
         ];
 
         $instructionStartRow = $instructionRow + 1;
@@ -782,7 +784,7 @@ class SiswaController extends AdminBaseController
         // Add note about columns
         $noteRow = $instructionStartRow + count($instructions) + 1;
         $sheet->setCellValue('A' . $noteRow, 'KOLOM YANG DIPROSES SISTEM:');
-        $sheet->getStyle('A' . $noteRow)->getFont()->setBold(true)->setSize(11)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('0000FF'));
+        $sheet->getStyle('A' . $noteRow)->getFont()->setBold(true)->setSize(11)->getColor()->setRGB('0000FF');
         $sheet->mergeCells('A' . $noteRow . ':E' . $noteRow);
 
         $columnInfo = [
@@ -818,9 +820,16 @@ class SiswaController extends AdminBaseController
         }
 
         // Set column widths
-        $widths = [12, 15, 30, 8, 20];
-        foreach ($widths as $index => $width) {
-            $sheet->getColumnDimensionByColumn($index + 1)->setWidth($width);
+        $columnWidths = [
+            'A' => 12,
+            'B' => 15,
+            'C' => 30,
+            'D' => 8,
+            'E' => 20
+        ];
+        
+        foreach ($columnWidths as $column => $width) {
+            $sheet->getColumnDimension($column)->setWidth($width);
         }
 
         // Freeze header row
@@ -950,57 +959,71 @@ class SiswaController extends AdminBaseController
     }
 
     /**
-     * Execute year progression (manual trigger)
+     *  Execute year progression (manual trigger)
      */
     public function executeYearProgression(Request $request)
     {
-        $dryRun = $request->boolean('dry_run', false);
-        
         try {
-            if ($dryRun) {
-                // Run in dry-run mode
-                \Artisan::call('students:progress-year', ['--dry-run' => true]);
-            } else {
-                // Run actual progression
-                \Artisan::call('students:progress-year');
-                
-                // Store last execution info
-                session([
-                    'last_progression' => [
-                        'date' => now()->format('d-M-Y H:i'),
-                        'user' => auth()->user()->name,
-                        'summary' => 'Berhasil dijalankan'
-                    ]
-                ]);
+            // Add a timeout for long-running operations
+            set_time_limit(300); // 5 minutes
+            
+            // Run actual progression
+            $exitCode = \Artisan::call('students:progress-year');
+            
+            if ($exitCode !== 0) {
+                throw new \Exception('Year progression command failed with exit code: ' . $exitCode);
             }
             
+            // Get the command output
             $output = \Artisan::output();
             
-            // Log the action
-            \Log::info($dryRun ? 'Year progression preview executed' : 'Year progression executed', [
-                'user' => auth()->user()->name,
-                'dry_run' => $dryRun,
-                'output' => $output
+            // Parse output for summary (optional, for better feedback)
+            preg_match('/Students progressed: (\d+)/', $output, $progressed);
+            preg_match('/Students repeating grade: (\d+)/', $output, $repeating);
+            preg_match('/Students deleted \(graduated\): (\d+)/', $output, $deleted);
+            preg_match('/Students skipped: (\d+)/', $output, $skipped);
+            
+            $summary = sprintf(
+                'Berhasil! Naik kelas: %d | Mengulang: %d | Lulus (dihapus): %d | Dilewati: %d',
+                $progressed[1] ?? 0,
+                $repeating[1] ?? 0,
+                $deleted[1] ?? 0,
+                $skipped[1] ?? 0
+            );
+            
+            // Store last execution info
+            session([
+                'last_progression' => [
+                    'date' => now()->format('d M Y H:i'),
+                    'user' => auth()->user()->name,
+                    'summary' => $summary
+                ]
             ]);
             
-            $message = $dryRun 
-                ? 'Preview kenaikan tahun berhasil! Lihat log untuk detailnya.' 
-                : 'Kenaikan tahun berhasil diproses! Silakan cek data siswa.';
+            // Log the action
+            \Log::info('Year progression executed successfully', [
+                'user_id' => auth()->id(),
+                'user' => auth()->user()->name,
+                'timestamp' => now()->toDateTimeString(),
+                'summary' => $summary
+            ]);
             
             return redirect()
                 ->route('admin.siswa.year-progression')
-                ->with('success', $message)
-                ->with('output', $output);
+                ->with('success', 'Kenaikan tahun berhasil diproses! ' . $summary);
                 
         } catch (\Exception $e) {
-            \Log::error('Year progression failed', [
+            \Log::error('Year progression execution failed', [
+                'user_id' => auth()->id(),
+                'user' => auth()->user()->name ?? 'unknown',
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'timestamp' => now()->toDateTimeString()
             ]);
             
             return redirect()
                 ->route('admin.siswa.year-progression')
-                ->with('error', 'Gagal memproses kenaikan tahun: ' . $e->getMessage());
+                ->with('error', 'Gagal memproses kenaikan tahun: ' . $e->getMessage() . '. Silakan cek log untuk detail lebih lanjut.');
         }
     }
 

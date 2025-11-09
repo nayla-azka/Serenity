@@ -58,37 +58,110 @@
 }
 
 /* Notification item styles for read/unread */
+.notification-item {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f0f0f0;
+    position: relative;
+}
+
 .notification-item.read {
-    background-color: #f8f9fa !important;
-    opacity: 0.8;
+    background-color: #ffffff !important;
+    opacity: 0.7;
 }
 
 .notification-item.unread {
-    background-color: #e7f3ff !important;
+    background-color: #f0f8ff !important;
     border-left: 3px solid #007bff;
 }
 
-.notification-item {
-    transition: all 0.2s ease;
+.notification-item:hover {
+    background-color: #f8f9fa !important;
+    transform: translateX(2px);
 }
 
-.notification-item:hover {
-    background-color: #e9ecef !important;
+.notification-item:last-child {
+    border-bottom: none;
 }
 
 /* Fix for clickable notifications */
 .notification-item .notification-clickable-area {
     cursor: pointer;
     flex-grow: 1;
+    padding: 4px 0;
 }
 
 .notification-item .notification-actions {
     flex-shrink: 0;
+    gap: 4px;
+}
+
+/* Notification icon styling */
+.notification-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: #f8f9fa;
+    flex-shrink: 0;
+}
+
+.notification-icon i {
+    font-size: 16px;
+}
+
+/* Badge improvements */
+.notification-item .badge {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    font-weight: 600;
+}
+
+/* Delete button styling */
+.delete-single-btn {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.delete-single-btn:hover {
+    background-color: #dc3545;
+    color: white;
+    transform: scale(1.05);
+}
+
+/* Notification header improvements */
+.notification-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+    padding: 16px;
+    border-radius: 12px 12px 0 0;
+}
+
+.notification-header h6 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+}
+
+.notification-header .btn-group button {
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.notification-header .btn-group button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 /* Notification dropdown width fix */
 .notification-dropdown-menu {
-  width: 400px;
+  width: 420px;
   max-width: 90vw;
   overflow-x: hidden;
   white-space: normal;
@@ -96,6 +169,9 @@
   left: auto !important;
   max-height: 500px;
   overflow-y: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 
 /* Search bar extra mini */
@@ -152,7 +228,7 @@
 
 .username-truncate {
     display: inline-block;
-    max-width: 80px; /* sesuaikan panjangnya */
+    max-width: 80px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -163,18 +239,20 @@
 /* ================= MOBILE RESPONSIVE ================= */
 @media (max-width: 991.98px) {
 .notification-dropdown-menu {
-    top: 60px; /* sesuaikan dengan tinggi navbar kamu */
-    left: 5 !important;
-    right: 0 !important;
-    height: 50vh; /* biar penuh layar */
-    width: 30vh;
-    max-width: 100vh;
-    max-height: 100vh;
+    position: fixed !important;
+    top: 60px !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    height: auto;
+    max-height: 70vh;
+    width: 90vw !important;
+    max-width: 400px;
     overflow-y: auto;
-    border-radius: 0;
+    border-radius: 12px;
     z-index: 1055;
-    transform: none !important;
-    background-color: #fff; /* pastiin ada background */
+    background-color: #fff;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
   }
 
   .custom-navbar .container {
@@ -338,13 +416,13 @@
                         </button>
                         <div id="notification-dropdown-mobile"
                             class="dropdown-menu notification-dropdown-menu p-0 shadow">
-                            <div class="d-flex justify-content-between align-items-center p-3 border-bottom bg-light">
+                            <div class="notification-header d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="mb-0 fw-bold">Notifikasi</h6>
-                                    <small class="text-muted" id="public-notification-count-text">Memuat...</small>
+                                    <h6 class="mb-0">Notifikasi</h6>
+                                    <small class="text-muted" id="public-notification-count-text-mobile">Memuat...</small>
                                 </div>
                                 <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-secondary mark-all-read-btn"
+                                    <button class="btn btn-outline-secondary mark-all-read-btn align-center"
                                             title="Tandai semua sebagai dibaca">
                                         <i class="fas fa-check"></i>
                                     </button>
@@ -439,8 +517,11 @@
                     </button>
                     <div id="notification-dropdown-desktop"
                         class="dropdown-menu notification-dropdown-menu p-0 shadow">
-                        <div class="d-flex justify-content-between align-items-center p-3 border-bottom bg-light">
-                            <h6 class="mb-0 fw-bold">Notifikasi</h6>
+                        <div class="notification-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">Notifikasi</h6>
+                                <small class="text-muted" id="public-notification-count-text-desktop">Memuat...</small>
+                            </div>
                             <div class="btn-group btn-group-sm">
                                 <button class="btn btn-outline-secondary mark-all-read-btn"
                                         title="Tandai semua sebagai dibaca">
@@ -487,7 +568,7 @@
 // Ensure global functions exist
 window.showToast = window.showToast || function(message, type = 'success') {
     console.log('Toast:', message, type);
-    alert(message); // Fallback
+    alert(message);
 };
 
 window.showConfirm = window.showConfirm || function(message, callback, title = 'Konfirmasi') {
@@ -516,37 +597,35 @@ class PublicNotificationSystem {
     }
 
     setupEventListeners() {
-        // Mark all as read buttons
-        document.querySelectorAll('.mark-all-read-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+        // Setup button listeners using event delegation
+        document.addEventListener('click', (e) => {
+            // Mark all as read
+            if (e.target.closest('.mark-all-read-btn')) {
                 e.preventDefault();
                 e.stopPropagation();
                 this.markAllAsRead();
-            });
-        });
-
-        // Delete all read buttons
-        document.querySelectorAll('.delete-all-read-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            }
+            
+            // Delete all read
+            if (e.target.closest('.delete-all-read-btn')) {
                 e.preventDefault();
                 e.stopPropagation();
                 this.deleteAllRead();
-            });
-        });
-
-        // Dropdown shown event handlers
-        document.querySelectorAll('.notification-dropdown .dropdown-menu').forEach(dropdown => {
-            dropdown.addEventListener('shown.bs.dropdown', () => {
-                console.log('Dropdown shown');
-                if (this.notifications.length === 0) {
-                    this.fetchNotifications();
-                } else {
-                    this.renderNotifications();
+            }
+            
+            // Delete single notification
+            if (e.target.closest('.delete-single-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                const btn = e.target.closest('.delete-single-btn');
+                const notifId = btn.dataset.notificationId;
+                if (notifId) {
+                    this.deleteNotification(notifId, btn);
                 }
-            });
+            }
         });
 
-        // Handle Bootstrap dropdown events
+        // Handle Bootstrap dropdown events for both mobile and desktop
         const dropdowns = document.querySelectorAll('.notification-dropdown');
         dropdowns.forEach(dropdown => {
             dropdown.addEventListener('show.bs.dropdown', () => {
@@ -600,6 +679,7 @@ class PublicNotificationSystem {
         this.updateBadges();
         this.updateNotificationCountText();
 
+        const dropdownOpened = document.querySelector('.notification-dropdown .dropdown-menu.show');
         if (dropdownOpened) {
             this.renderNotifications();
         }
@@ -622,7 +702,7 @@ class PublicNotificationSystem {
             if (!response.ok) throw new Error('Network response was not ok');
             return response.json();
         })
-         .then(data => {
+        .then(data => {
             console.log('Fetched notifications:', data);
             if (data.success && Array.isArray(data.data)) {
                 this.notifications = data.data;
@@ -630,14 +710,14 @@ class PublicNotificationSystem {
                 this.notifications = [];
             }
             this.updateBadges();
-            this.updateNotificationCountText(); // ADD THIS LINE
+            this.updateNotificationCountText();
             this.renderNotifications();
         })
         .catch(error => {
             console.error('Error fetching notifications:', error);
             this.notifications = [];
             this.updateBadges();
-            this.updateNotificationCountText(); // ADD THIS LINE
+            this.updateNotificationCountText();
             this.showErrorState();
         })
         .finally(() => {
@@ -649,7 +729,6 @@ class PublicNotificationSystem {
         const lists = document.querySelectorAll('.notification-list');
 
         lists.forEach(list => {
-            // Remove loading indicator
             const loading = list.querySelector('.loading-notifications');
             if (loading) loading.remove();
 
@@ -671,34 +750,37 @@ class PublicNotificationSystem {
                 list.appendChild(element);
             });
 
-             this.updateNotificationCountText();
+            this.updateNotificationCountText();
         });
     }
 
     createNotificationElement(notification) {
         const element = document.createElement("div");
-        element.className = `notification-item border-bottom position-relative ${notification.read ? 'read' : 'unread'}`;
+        element.className = `notification-item position-relative ${notification.read ? 'read' : 'unread'}`;
         element.dataset.id = notification.id;
 
         const hasUrl = notification.url && notification.url !== 'null' && notification.url !== 'undefined' && notification.url !== '';
 
         element.innerHTML = `
-            <div class="d-flex align-items-start p-3">
-                <div class="me-2 mt-1">
+            <div class="d-flex align-items-start p-3 gap-3">
+                <div class="notification-icon">
                     ${this.getNotificationIcon(notification.type)}
                 </div>
                 <div class="notification-clickable-area flex-grow-1"
-                     style="cursor: ${hasUrl ? 'pointer' : 'default'}">
-                    <div class="notification-message mb-1">${this.safeHtml(notification.message)}</div>
-                    <small class="text-muted">
+                     style="cursor: pointer; min-width: 0;">
+                    <div class="notification-message mb-1 fw-500" style="font-size: 14px; line-height: 1.4;">
+                        ${this.safeHtml(notification.message)}
+                    </div>
+                    <small class="text-muted d-flex align-items-center" style="font-size: 12px;">
                         <i class="fas fa-clock me-1"></i>${this.safeHtml(notification.time)}
                     </small>
                 </div>
-                <div class="notification-actions ms-2 d-flex flex-column align-items-end">
+                <div class="notification-actions d-flex flex-column align-items-end gap-2">
                     ${!notification.read ?
-                        '<span class="badge bg-primary rounded-pill mb-1">Baru</span>' :
-                        '<span class="badge bg-secondary rounded-pill mb-1">Dibaca</span>'}
+                        '<span class="badge bg-primary rounded-pill">Baru</span>' :
+                        '<span class="badge bg-secondary rounded-pill">Dibaca</span>'}
                     <button type="button" class="btn btn-sm btn-outline-danger delete-single-btn"
+                            data-notification-id="${notification.id}"
                             title="Hapus notifikasi">
                         <i class="fas fa-times"></i>
                     </button>
@@ -706,23 +788,23 @@ class PublicNotificationSystem {
             </div>
         `;
 
-        // Add click handler for clickable area
         const clickableArea = element.querySelector('.notification-clickable-area');
-        if (clickableArea && hasUrl) {
+        if (clickableArea) {
             clickableArea.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.redirectToNotification(notification.url, notification.id);
-            });
-        }
-
-        // Add delete handler
-        const deleteBtn = element.querySelector('.delete-single-btn');
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                this.deleteNotification(notification.id, deleteBtn);
+                
+                // Don't do anything if already read
+                if (notification.read) {
+                    return;
+                }
+                
+                if (hasUrl) {
+                    this.redirectToNotification(notification.url, notification.id);
+                } else {
+                    // Mark as read without redirecting
+                    this.markNotificationAsRead(notification.id);
+                }
             });
         }
 
@@ -760,23 +842,23 @@ class PublicNotificationSystem {
     updateNotificationCountText() {
         const totalCount = this.notifications.length;
         const unreadCount = this.notifications.filter(n => !n.read).length;
-        const readCount = totalCount - unreadCount;
-
-        const countText = document.getElementById('public-notification-count-text');
-        if (countText) {
-            if (totalCount === 0) {
-                countText.textContent = 'Tidak ada notifikasi';
-            } else {
-                countText.textContent = `${totalCount} total (${unreadCount} belum dibaca, ${readCount} sudah dibaca)`;
-            }
-        }
+        
+        const countTextMobile = document.getElementById('public-notification-count-text-mobile');
+        const countTextDesktop = document.getElementById('public-notification-count-text-desktop');
+        
+        const textContent = totalCount === 0 
+            ? 'Tidak ada notifikasi' 
+            : `${totalCount} total • ${unreadCount} belum dibaca`;
+        
+        if (countTextMobile) countTextMobile.textContent = textContent;
+        if (countTextDesktop) countTextDesktop.textContent = textContent;
     }
 
     markAllAsRead() {
         const unreadNotifications = this.notifications.filter(n => !n.read);
         if (unreadNotifications.length === 0) {
             if (typeof window.showToast === 'function') {
-                window.showToast('Semua notifikasi sudah dibaca.');
+                window.showToast('Semua notifikasi sudah dibaca.', 'info');
             }
             return;
         }
@@ -791,6 +873,7 @@ class PublicNotificationSystem {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success' || data.success) {
+
                 this.notifications.forEach(n => {
                     n.read = true;
                     n.isNew = false;
@@ -799,14 +882,14 @@ class PublicNotificationSystem {
                 this.updateNotificationCountText();
                 this.renderNotifications();
                 if (typeof window.showToast === 'function') {
-                    window.showToast('Semua notifikasi berhasil ditandai sebagai dibaca.');
+                    window.showToast('Semua notifikasi berhasil ditandai sebagai dibaca.', 'success');
                 }
             }
         })
         .catch(error => {
             console.error('Error:', error);
             if (typeof window.showToast === 'function') {
-                window.showToast('Gagal menandai notifikasi sebagai dibaca.', 'error');
+                window.showToast('Gagal menandai notifikasi sebagai dibaca.', 'danger');
             }
         });
     }
@@ -846,13 +929,13 @@ class PublicNotificationSystem {
                 this.renderNotifications();
 
                 if (typeof window.showToast === 'function') {
-                    window.showToast('Notifikasi berhasil dihapus.');
+                    window.showToast('Notifikasi berhasil dihapus.', 'success');
                 }
             } else {
                 buttonElement.innerHTML = originalIcon;
                 buttonElement.disabled = false;
                 if (typeof window.showToast === 'function') {
-                    window.showToast('Gagal menghapus notifikasi.', 'error');
+                    window.showToast('Gagal menghapus notifikasi.', 'danger');
                 }
             }
         })
@@ -861,7 +944,7 @@ class PublicNotificationSystem {
             buttonElement.innerHTML = originalIcon;
             buttonElement.disabled = false;
             if (typeof window.showToast === 'function') {
-                window.showToast('Gagal menghapus notifikasi.', 'error');
+                window.showToast('Gagal menghapus notifikasi.', 'danger');
             }
         });
     }
@@ -870,7 +953,7 @@ class PublicNotificationSystem {
         const readNotifications = this.notifications.filter(n => n.read);
         if (readNotifications.length === 0) {
             if (typeof window.showToast === 'function') {
-                window.showToast('Tidak ada notifikasi yang sudah dibaca untuk dihapus.');
+                window.showToast('Tidak ada notifikasi yang sudah dibaca untuk dihapus.', 'info');
             }
             return;
         }
@@ -903,14 +986,74 @@ class PublicNotificationSystem {
                 this.updateNotificationCountText();
                 this.renderNotifications();
                 if (typeof window.showToast === 'function') {
-                    window.showToast(`${data.deleted || 0} notifikasi telah dihapus.`);
+                    window.showToast(`${data.deleted || 0} notifikasi telah dihapus.`, 'success');
                 }
             }
         })
         .catch(error => {
             console.error('Error:', error);
             if (typeof window.showToast === 'function') {
-                window.showToast('Gagal menghapus notifikasi.', 'error');
+                window.showToast('Gagal menghapus notifikasi.', 'danger');
+            }
+        });
+    }
+
+    markNotificationAsRead(notificationId) {
+        console.log('Marking notification as read:', notificationId);
+
+        // Update UI immediately with animation
+        document.querySelectorAll(`.notification-item[data-id="${notificationId}"]`).forEach(item => {
+            item.style.transition = 'all 0.3s ease';
+            item.classList.remove('unread');
+            item.classList.add('read');
+            const badge = item.querySelector(".badge.bg-primary");
+            if (badge) {
+                badge.classList.remove('bg-primary');
+                badge.classList.add('bg-secondary');
+                badge.textContent = 'Dibaca';
+            }
+        });
+
+        // Update notification in array
+        const notification = this.notifications.find(n => n.id === notificationId);
+        if (notification) {
+            notification.read = true;
+            notification.isNew = false;
+        }
+
+        this.updateBadges();
+        this.updateNotificationCountText();
+
+        // Mark as read in backend
+        fetch('/serenity/notifications/mark-read', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': this.getCSRFToken(),
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ notification_ids: [notificationId] })
+        })
+        .then(response => {
+            console.log('Mark-read response status:', response.status);
+            if (!response.ok) {
+                console.error('Mark-read response not OK:', response.status);
+                throw new Error('Failed to mark as read');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Mark-read response data:', data);
+            if (data.success || data.status === 'success') {
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Notifikasi ditandai sebagai dibaca', 'success');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Mark-read failed:', error);
+            if (typeof window.showToast === 'function') {
+                window.showToast('Gagal menandai notifikasi sebagai dibaca', 'danger');
             }
         });
     }
@@ -980,10 +1123,10 @@ class PublicNotificationSystem {
             `;
         });
 
-        const countText = document.getElementById('public-notification-count-text');
-        if (countText) {
-            countText.textContent = 'Memuat...';
-        }
+        const countTextMobile = document.getElementById('public-notification-count-text-mobile');
+        const countTextDesktop = document.getElementById('public-notification-count-text-desktop');
+        if (countTextMobile) countTextMobile.textContent = 'Memuat...';
+        if (countTextDesktop) countTextDesktop.textContent = 'Memuat...';
     }
 
     showErrorState() {
@@ -1001,10 +1144,10 @@ class PublicNotificationSystem {
             `;
         });
 
-        const countText = document.getElementById('public-notification-count-text');
-        if (countText) {
-            countText.textContent = 'Gagal memuat';
-        }
+        const countTextMobile = document.getElementById('public-notification-count-text-mobile');
+        const countTextDesktop = document.getElementById('public-notification-count-text-desktop');
+        if (countTextMobile) countTextMobile.textContent = 'Gagal memuat';
+        if (countTextDesktop) countTextDesktop.textContent = 'Gagal memuat';
     }
 
     safeHtml(text) {

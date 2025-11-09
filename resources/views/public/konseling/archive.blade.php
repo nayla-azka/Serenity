@@ -244,21 +244,21 @@
                     <div class="archive-preview">
                         <small class="text-muted">
                             <i class="fas fa-calendar me-1"></i>
-                            Diarsip: {{ \Carbon\Carbon::parse($archive->archived_at)->format('d M Y, H:i') }}
+                            Diarsip: {{ $archive->archived_at->format('d M Y, H:i') }}
                         </small>
                         @if($archive->session_started_at)
                         <p class="mt-2 mb-0 small">
                             <i class="fas fa-clock me-1"></i>
-                            Sesi: {{ \Carbon\Carbon::parse($archive->session_started_at)->format('d M Y') }}
+                            Sesi: {{ $archive->session_started_at->format('d M Y') }}
                             @if($archive->session_ended_at)
-                                - {{ \Carbon\Carbon::parse($archive->session_ended_at)->format('d M Y') }}
+                                - {{ $archive->session_ended_at->format('d M Y') }}
                             @endif
                         </p>
                         @endif
                         @if($archive->last_message_at)
                         <p class="mt-1 mb-0 small">
                             <i class="fas fa-comment me-1"></i>
-                            Pesan terakhir: {{ \Carbon\Carbon::parse($archive->last_message_at)->format('d M Y, H:i') }}
+                            Pesan terakhir: {{ $archive->last_message_at->format('d M Y, H:i') }}
                         </p>
                         @endif
                     </div>

@@ -172,7 +172,7 @@
                     @if(isset($archivedSession->student) && $archivedSession->student->class)
                         Kelas: {{ $archivedSession->student->class->class_name }} •
                     @endif
-                    Diarsip: {{ \Carbon\Carbon::parse($archivedSession->archived_at)->format('d M Y, H:i') }}
+                    Diarsip: {{ $archivedSession->archived_at->format('d M Y, H:i') }}
                 </small>
             </div>
 
@@ -205,15 +205,15 @@
 
                     @foreach($messages as $message)
                         @php
-                            $messageDate = \Carbon\Carbon::parse($message->sent_at)->format('Y-m-d');
-                            $messageTime = \Carbon\Carbon::parse($message->sent_at)->format('H:i');
+                            $messageDate = $message->sent_at->format('Y-m-d');
+                            $messageTime = $message->sent_at->format('H:i');
                             $isFromCounselor = $message->sender_type === 'counselor';
                         @endphp
 
                         <!-- Date divider -->
                         @if($currentDate !== $messageDate)
                             <div class="date-divider">
-                                <span>{{ \Carbon\Carbon::parse($message->sent_at)->format('l, d M Y') }}</span>
+                                <span>{{ $message->sent_at->format('l, d M Y') }}</span>
                             </div>
                             @php $currentDate = $messageDate; @endphp
                         @endif
@@ -253,9 +253,9 @@
                 <div class="mt-2">
                     <small class="text-muted">
                         Session Period:
-                        {{ \Carbon\Carbon::parse($archivedSession->session_started_at)->format('d M Y') }}
+                       {{ $archivedSession->session_started_at->format('d M Y') }}
                         @if($archivedSession->session_ended_at)
-                            - {{ \Carbon\Carbon::parse($archivedSession->session_ended_at)->format('d M Y') }}
+                            - {{ $archivedSession->session_ended_at->format('d M Y') }}
                         @endif
                     </small>
                 </div>

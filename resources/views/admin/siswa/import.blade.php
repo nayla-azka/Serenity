@@ -205,9 +205,10 @@
                         <li>Proses import mungkin memakan waktu untuk file besar</li>
                       </ul>
                     </div>
+                    <small class="text-muted">proses memakan waktu yang lama, harap untuk tidak keluar dari halaman</small>
                   </div>
                 </div>
-
+    
                 <!-- Submit Button -->
                 <div class="form-group row mb-4">
                   <label class="col-form-label text-md-right col-12 col-md-3 col-lg-3"></label>

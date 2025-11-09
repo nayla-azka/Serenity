@@ -46,8 +46,7 @@ class defaultMessageController extends AdminBaseController
 
             // Validate input
             $validator = Validator::make($request->all(), [
-                'default_chat_message' => 'nullable|string|max:500',
-                'auto_send_welcome' => 'nullable|boolean'
+                'default_chat_message' => 'nullable|string|max:500'
             ]);
 
             if ($validator->fails()) {
@@ -56,10 +55,10 @@ class defaultMessageController extends AdminBaseController
                     ->withInput();
             }
 
-            // Update counselor settings
+            // Update counselor settings - auto_send_welcome is always 1
             $counselor->update([
                 'default_chat_message' => $request->default_chat_message,
-                'auto_send_welcome' => $request->has('auto_send_welcome') ? true : false
+                'auto_send_welcome' => 1 // Always keep it as 1
             ]);
 
             return redirect()->back()->with('success', 'Pengaturan berhasil diperbarui!');

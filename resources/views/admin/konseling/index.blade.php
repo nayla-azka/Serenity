@@ -2,9 +2,10 @@
 
 @push('styles')
 <style>
-    html, body{
+    html, body {
         overflow: hidden;
     }
+    
     .chat-container {
         margin: -1rem !important;
         height: calc(100vh - 120px);
@@ -22,6 +23,7 @@
         padding: 0.75rem 1rem;
         margin: 0.25rem 0;
     }
+    
     .chat-bubble:hover {
         background: rgba(0,0,0,0.05);
     }
@@ -43,6 +45,7 @@
         align-self: flex-end;
         border-bottom-right-radius: 0.3rem;
     }
+    
     .chat-bubble.received {
         background: #e9ecef;
         color: #333;
@@ -85,10 +88,12 @@
     #chat-box::-webkit-scrollbar {
         width: 6px;
     }
+    
     #chat-box::-webkit-scrollbar-thumb {
         background: rgba(131,122,182,0.6);
         border-radius: 3px;
     }
+    
     #chat-box::-webkit-scrollbar-thumb:hover {
         background: rgba(131,122,182,1);
     }
@@ -96,6 +101,7 @@
     .quick-reply-btn {
         transition: all 0.2s ease;
     }
+    
     .quick-reply-btn:hover {
         background-color: #837ab6 !important;
         color: white !important;
@@ -104,16 +110,41 @@
 
     .session-item {
         transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
     }
+    
     .session-item:hover {
         background-color: rgba(131,122,182,0.1) !important;
-        transform: translateX(3px);
+        transform: translateY(-3px);
+    }
+    
+    .session-item.active {
+        background-color: rgba(131,122,182,0.08) !important;
+    }
+
+    .session-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 3px;
+        height: 100%;
+        background: linear-gradient(135deg, #837ab6, #9f95d3);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    .session-item:hover::before,
+    .session-item.active::before {
+        transform: translateX(0);
     }
 
     .chat-header {
         background: linear-gradient(90deg, #837ab6, #9f95d3);
         color: white;
     }
+    
     .chat-header h6,
     .chat-header small {
         color: white !important;
@@ -166,7 +197,6 @@
         }
     }
 
-    /* Session management styles */
     .session-actions {
         display: flex;
         gap: 0.5rem;
@@ -227,13 +257,14 @@
         margin-top: 0.5rem;
         display: inline-block;
     }
+    
     .dt-btn.send:hover {
         color: #fff;
         transform: scale(1.05);
         outline: 1.5px solid #a89ad9;
     }
 
-    .dt-btn.send{
+    .dt-btn.send {
         display: inline-block;
         position: relative;
         overflow: hidden;
@@ -260,78 +291,243 @@
         width: 200%;
     }
 
-        /* === Status Bulat Online/Offline === */
+    /* ==================== PROFILE PICTURE FIX ==================== */
+    /* This ensures ALL profile pictures are perfectly circular */
+    
+    img.rounded-circle,
+    .rounded-circle img,
+    .session-item img.rounded-circle,
+    .chat-header img.rounded-circle,
+    .position-relative img.rounded-circle {
+        width: 40px !important;
+        height: 40px !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
+        max-width: 40px !important;
+        max-height: 40px !important;
+        aspect-ratio: 1 / 1 !important;
+        object-fit: cover !important;
+        border-radius: 50% !important;
+        display: block !important;
+        flex-shrink: 0 !important;
+        overflow: hidden !important;
+        border: 2px solid #fff !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        vertical-align: middle !important;
+    }
+
+    /* Container for profile picture with status indicator */
+    .position-relative.me-3 {
+        position: relative !important;
+        display: inline-block !important;
+        flex-shrink: 0 !important;
+        margin-right: 0.75rem !important;
+    }
+
+    /* Status indicators - positioned absolutely relative to parent */
+    .online-status,
+    .offline-status {
+        position: absolute !important;
+        bottom: 2px !important;
+        right: 2px !important;
+        width: 12px !important;
+        height: 12px !important;
+        min-width: 12px !important;
+        min-height: 12px !important;
+        border-radius: 50% !important;
+        border: 2px solid #fff !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+        z-index: 2 !important;
+    }
+
     .online-status {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: #28a745; /* hijau untuk active */
-    border: 1px solid #fff;
-}
-
-.offline-status {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: #6c757d; /* abu-abu untuk ended */
-    border: 1px solid #fff;
-}
-
-
-    /* === Hover Session Item === */
-    .session-item {
-        transition: all 0.2s ease;
-    }
-    .session-item:hover {
-        background-color: rgba(131,122,182,0.1) !important;
-        transform: translateY(-3px); /* naik ke atas */
+        background-color: #28a745 !important;
+        animation: pulse-green 2s infinite;
     }
 
-img.rounded-circle {
-    width: 40px !important;
-    height: 40px !important;
-    aspect-ratio: 1 / 1 !important;
-    object-fit: cover !important;
-    border-radius: 50% !important;
-    display: inline-block !important; /* ganti block ke inline-block */
-    vertical-align: middle !important; /* biar sejajar */
-    flex-shrink: 0 !important; /* jangan ditarik flex */
-}
+    .offline-status {
+        background-color: #6c757d !important;
+    }
 
-.username-truncate {
-    display: inline-block;
-    max-width: 160px; /* sesuaikan panjangnya */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    vertical-align: middle;
-}
+    @keyframes pulse-green {
+        0%, 100% {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 0 0 0 rgba(40, 167, 69, 0.7);
+        }
+        50% {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 0 0 4px rgba(40, 167, 69, 0);
+        }
+    }
 
-.unread-badge {
-    background: linear-gradient(135deg, #dc3545, #e74c3c);
-    color: white;
-    border-radius: 50% !important;
-    width: 22px !important;
-    height: 22px !important;
-    aspect-ratio: 1 / 1 !important; /* jaga rasio 1:1 */
-    display: inline-flex !important; /* inline-flex biar gak ketarik parent flex */
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-    font-weight: bold;
-    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
-    animation: pulse 2s infinite;
-    line-height: 1; /* biar teks ga dorong tinggi */
-    flex-shrink: 0; /* cegah flexbox narik bentuk */
-}
+    /* ==================== SESSION LIST UI ELEMENTS ==================== */
 
+    .username-truncate {
+        display: inline-block;
+        max-width: 160px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: middle;
+    }
 
+    .unread-badge {
+        background: linear-gradient(135deg, #dc3545, #e74c3c) !important;
+        color: white !important;
+        border-radius: 50% !important;
+        min-width: 22px !important;
+        height: 22px !important;
+        padding: 0 6px !important;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem !important;
+        font-weight: bold !important;
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4) !important;
+        animation: pulse-badge 2s infinite;
+        line-height: 1 !important;
+        flex-shrink: 0 !important;
+        position: absolute !important;
+        right: 0 !important;
+        top: 0 !important;
+    }
+
+    @keyframes pulse-badge {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.1);
+            opacity: 0.9;
+        }
+    }
+
+    .session-preview {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+        margin-bottom: 0.25rem;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+    }
+
+    /* Session item layout fixes */
+    .session-item .d-flex {
+        align-items: flex-start;
+        gap: 0;
+    }
+
+    .session-item .flex-grow-1 {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .session-item .min-width-0 {
+        min-width: 0 !important;
+    }
+
+    /* Stats styling */
+    #total-sessions,
+    #total-unread {
+        font-size: 1.25rem;
+        display: block;
+        font-weight: 600;
+    }
+
+    /* Scrollbar for session list */
+    .flex-grow-1::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .flex-grow-1::-webkit-scrollbar-thumb {
+        background: rgba(131,122,182,0.4);
+        border-radius: 3px;
+    }
+    
+    .flex-grow-1::-webkit-scrollbar-thumb:hover {
+        background: rgba(131,122,182,0.7);
+    }
+
+    /* Fix for empty state */
+    .text-center.text-muted.p-4 {
+        padding: 2rem !important;
+    }
+
+    .text-center.text-muted.p-4 i {
+        opacity: 0.5;
+        margin-bottom: 1rem !important;
+        display: block;
+    }
+
+    /* Archive button styling */
+    .dt.dt-btn.create {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+        min-height: auto;
+    }
+
+    .dt.dt-btn.create a {
+        color: inherit;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    /* Header consistency */
+    .border-bottom.flex-shrink-0 {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* Strong tags in session items */
+    .session-item strong {
+        font-weight: 600;
+        color: #212529;
+    }
+
+    /* Session item padding and spacing */
+    .session-item > div {
+        position: relative;
+    }
+
+    .session-item .d-flex.align-items-center.justify-content-between {
+        position: relative;
+        min-height: 22px;
+    }
+
+    /* Mobile responsive adjustments */
+    @media (max-width: 768px) {
+        img.rounded-circle,
+        .rounded-circle img,
+        .position-relative img.rounded-circle {
+            width: 35px !important;
+            height: 35px !important;
+            min-width: 35px !important;
+            min-height: 35px !important;
+            max-width: 35px !important;
+            max-height: 35px !important;
+        }
+
+        .online-status,
+        .offline-status {
+            width: 10px !important;
+            height: 10px !important;
+            min-width: 10px !important;
+            min-height: 10px !important;
+        }
+
+        .username-truncate {
+            max-width: 120px;
+        }
+
+        .unread-badge {
+            min-width: 20px !important;
+            height: 20px !important;
+            font-size: 0.65rem !important;
+        }
+    }
 </style>
 @endpush
 
@@ -339,9 +535,9 @@ img.rounded-circle {
 <div class="chat-container">
     <div class="row h-100 g-0">
         <!-- Sidebar - Student Sessions -->
-        <div class="col-3 border-end d-flex flex-column" style="background-color: #f8f9fa; overflow: hidden;">
+        <div class="col-3 border-end d-flex flex-column" style="background-color: #f8f9fa; height: calc(93vh - 60px); overflow: hidden;">
            <!-- Header -->
-            <div class="p-3 border-bottom" style="background-color: rgb(131, 122, 182); color: white;">
+            <div class="p-3 border-bottom flex-shrink-0" style="background-color: rgb(131, 122, 182); color: white;">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-0">
@@ -349,17 +545,16 @@ img.rounded-circle {
                         </h6>
                         <small class="opacity-75">{{ Auth::user()->name ?? 'Konselor' }}</small>
                     </div>
-                        <button class="dt dt-btn create"
-                            type="button" >
-                            <a class="dropdown-item" href="{{ route('admin.konseling.archive-list') }}">
-                                <i class="bi bi-archive"></i>
-                            </a>
-                        </button>
+                    <button class="dt dt-btn create" type="button">
+                        <a class="dropdown-item" href="{{ route('admin.konseling.archive-list') }}">
+                            <i class="bi bi-archive"></i>
+                        </a>
+                    </button>
                 </div>
             </div>
 
             <!-- Stats Bar -->
-            <div class="p-2 bg-light border-bottom">
+            <div class="p-2 bg-light border-bottom flex-shrink-0">
                 <div class="row text-center">
                     <div class="col-6">
                         <small class="text-muted d-block">Total</small>
@@ -375,7 +570,7 @@ img.rounded-circle {
             </div>
 
             <!-- Sessions List -->
-            <div class="flex-grow-1 overflow-auto" style="overflow-x: hidden;">
+            <div class="flex-grow-1" style="overflow-y: auto; overflow-x: hidden; height: 0;">
                 @if($allSessions->count() > 0)
                     @foreach($allSessions as $s)
                     @php
@@ -384,18 +579,16 @@ img.rounded-circle {
                         $latestMsg = $s->latestMessage;
                         $preview = $latestMsg ? \Str::limit($latestMsg->message, 40) : 'Belum ada pesan';
                         $timeAgo = $latestMsg ? $latestMsg->sent_at->diffForHumans() : $s->created_at->diffForHumans();
-
-                        // NEW: Get view status for student
                         $studentViewStatus = $s->getViewStatus('student', $s->id_student);
                     @endphp
                     <a href="{{ route('admin.konseling.show', $s->id_session) }}"
-                    class="d-block text-decoration-none text-dark session-item {{ $isSelected ? 'active' : '' }}"
-                    style="border-bottom: 1px solid #eee;">
+                       class="d-block text-decoration-none text-dark session-item {{ $isSelected ? 'active' : '' }}"
+                       style="border-bottom: 1px solid #eee;">
                         <div class="p-3 position-relative">
                             <div class="d-flex align-items-start">
                                 <div class="position-relative me-3">
                                     <img src="{{ $s->student->photo ? asset('storage/' . $s->student->photo) : 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23ddd%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3E👤%3C/text%3E%3C/svg%3E' }}"
-                                        class="rounded-circle object-fit-cover" style="width: 40px; height: 40px;">
+                                         class="rounded-circle">
                                     @if($s->is_active)
                                         <div class="online-status"></div>
                                     @else
@@ -403,7 +596,7 @@ img.rounded-circle {
                                     @endif
                                 </div>
                                 <div class="flex-grow-1 min-width-0">
-                                    <div class="d-flex align-items-center justify-content-between username-truncate">
+                                    <div class="d-flex align-items-center justify-content-between position-relative">
                                         <strong class="text-truncate">{{ $studentName }}</strong>
                                         @if($s->unread_count > 0)
                                             <span class="unread-badge">{{ $s->unread_count }}</span>
@@ -415,7 +608,7 @@ img.rounded-circle {
                             </div>
                         </div>
                     </a>
-                @endforeach
+                    @endforeach
                 @else
                     <div class="text-center text-muted p-4">
                         <i class="fas fa-inbox fa-2x mb-2"></i>
@@ -678,6 +871,34 @@ $(document).ready(function() {
         csrfToken: csrfToken,
         markAsReadUrl: adminChatRoutes.markRead({{ $session->id_session }}) // FIXED: Use route helper
     });
+
+    if (chatHelper.channel) {
+        chatHelper.channel.bind('message.sent', (data) => {
+            console.log('📨 Admin received message:', data);
+            
+            if (data.sender_type === 'student') {
+                chatHelper.appendMessage(data, 'counselor');
+                
+                // Update badge counts immediately
+                updateUnreadCount();
+                
+                if (chatHelper.isPageVisible && chatHelper.isScrolledToBottom()) {
+                    setTimeout(() => chatHelper.markMessagesAsRead(), 500);
+                }
+            }
+        });
+        
+        chatHelper.channel.bind('messages.read', (data) => {
+            console.log('📬 Admin received read receipt:', data);
+            
+            if (data.message_ids && Array.isArray(data.message_ids)) {
+                chatHelper.updateMessageReadStatus(data.message_ids);
+                
+                // Update badges when student reads our messages
+                updateUnreadCount();
+            }
+        });
+    }
 
     $('#chat-form').off('submit').on('submit', function(e) {
         e.preventDefault();
@@ -952,21 +1173,85 @@ function deleteSession(sessionId) {
 
 function updateUnreadCount() {
     $.ajax({
-        url: adminChatRoutes.stats, // FIXED: Use route helper
+        url: adminChatRoutes.stats,
         method: 'GET',
         headers: {
             'Accept': 'application/json'
         },
         success: function(stats) {
+            console.log('📊 Admin stats updated:', stats);
+            
+            // Update totals
             $('#total-sessions').text(stats.total_sessions || 0);
             $('#total-unread').text(stats.total_unread || 0);
+            
+            // ✅ NEW: Update individual session badges
+            if (stats.sessions && Array.isArray(stats.sessions)) {
+                // First, remove badges from sessions with 0 unread
+                const allSessionLinks = $('a[href*="/admin/konseling/"]').filter(function() {
+                    return $(this).attr('href').match(/\/admin\/konseling\/\d+$/);
+                });
+                
+                allSessionLinks.each(function() {
+                    const $link = $(this);
+                    const sessionId = $link.attr('href').match(/\/(\d+)$/)?.[1];
+                    
+                    if (sessionId) {
+                        const sessionStat = stats.sessions.find(s => s.id_session == sessionId);
+                        const $badge = $link.find('.unread-badge');
+                        
+                        if (!sessionStat || sessionStat.unread_count === 0) {
+                            // Remove badge if exists
+                            if ($badge.length > 0) {
+                                $badge.fadeOut(200, function() {
+                                    $(this).remove();
+                                });
+                            }
+                        }
+                    }
+                });
+                
+                // Update or add badges for sessions with unread messages
+                stats.sessions.forEach(function(session) {
+                    if (session.unread_count > 0) {
+                        const $sessionLink = $(`a[href$="/admin/konseling/${session.id_session}"]`);
+                        
+                        if ($sessionLink.length > 0) {
+                            const $badge = $sessionLink.find('.unread-badge');
+                            
+                            if ($badge.length > 0) {
+                                // Update existing badge
+                                if ($badge.text() != session.unread_count) {
+                                    $badge.text(session.unread_count);
+                                }
+                            } else {
+                                // Create new badge
+                                const badgeHtml = `<span class="unread-badge">${session.unread_count}</span>`;
+                                const $container = $sessionLink.find('.d-flex.align-items-center.justify-content-between');
+                                
+                                if ($container.length > 0) {
+                                    $container.append(badgeHtml);
+                                } else {
+                                    $sessionLink.find('strong').after(badgeHtml);
+                                }
+                            }
+                        }
+                    }
+                });
+            }
         },
         error: function(xhr) {
-            console.error('Error getting stats:', xhr.responseText);
+            console.error('❌ Error getting stats:', xhr.responseText);
         }
     });
 }
 
+// Call it on page load
+$(document).ready(function() {
+    updateUnreadCount();
+});
+
+// Call it every 30 seconds
 setInterval(updateUnreadCount, 30000);
 </script>
 @endif

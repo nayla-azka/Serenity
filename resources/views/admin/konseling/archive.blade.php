@@ -210,13 +210,13 @@
                         <div class="archive-preview">
                             <small class="text-muted">
                                 <i class="fas fa-calendar me-1"></i>
-                                Archived: {{ \Carbon\Carbon::parse($archive->archived_at)->format('d M Y, H:i') }}
+                                Archived: {{ $archive->archived_at->format('d M Y, H:i') }}
                             </small>
                             @if($archive->session_started_at)
                             <p class="mt-2 mb-0 small">
-                                Session: {{ \Carbon\Carbon::parse($archive->session_started_at)->format('d M Y') }}
+                                Session: {{ $archive->session_started_at->format('d M Y') }}
                                 @if($archive->session_ended_at)
-                                    - {{ \Carbon\Carbon::parse($archive->session_ended_at)->format('d M Y') }}
+                                    - {{ $archive->session_ended_at->format('d M Y') }}
                                 @endif
                             </p>
                             @endif

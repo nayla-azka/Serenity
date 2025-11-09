@@ -104,9 +104,6 @@ class ChatController extends Controller
         }
     }
 
-    // ============================================
-    // GET SESSION STATS
-    // ============================================
     public function getSessionStats()
     {
         try {
@@ -121,26 +118,46 @@ class ChatController extends Controller
                 return response()->json(['error' => 'Counselor profile not found'], 404);
             }
 
-            $activeSessions = ChatSession::activeForCounselor($counselor->id_counselor)->get();
-            $archivedSessions = ChatSession::archivedForCounselor($counselor->id_counselor)->get();
+            // Get all active sessions (not archived/hidden by counselor)
+            $activeSessions = ChatSession::with(['student', 'messages' => function($query) {
+                $query->where('sender_type', 'student')
+                    ->where('status', 'sent'); // Unread student messages
+            }])
+            ->activeForCounselor($counselor->id_counselor)
+            ->get();
 
-            $totalUnread = 0;
-            foreach ($activeSessions as $session) {
-                $totalUnread += $session->getUnreadCountForCounselor();
-            }
+            // Get archived sessions count
+            $archivedSessions = ChatSession::archivedForCounselor($counselor->id_counselor)->count();
+
+            // Calculate unread counts per session
+            $sessionData = $activeSessions->map(function($session) {
+                return [
+                    'id_session' => $session->id_session,
+                    'unread_count' => $session->messages->count() // Unread student messages
+                ];
+            });
+
+            $totalUnread = $sessionData->sum('unread_count');
 
             $stats = [
                 'total_sessions' => $activeSessions->count(),
                 'active_sessions' => $activeSessions->where('is_active', true)->count(),
+                'ended_sessions' => $activeSessions->where('is_active', false)->count(),
                 'total_unread' => $totalUnread,
-                'archived_sessions' => $archivedSessions->count(),
+                'archived_sessions' => $archivedSessions,
+                'sessions' => $sessionData // ✅ Individual session unread counts
             ];
 
             return response()->json($stats);
 
         } catch (\Exception $e) {
-            Log::error('Error getting session stats: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to get stats'], 500);
+            Log::error('Error getting session stats (counselor): ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'error' => 'Failed to get stats',
+                'details' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
         }
     }
 
@@ -256,131 +273,168 @@ class ChatController extends Controller
     // GET ARCHIVE LIST
     // ============================================
     public function getArchiveList()
-{
-    try {
-        $user = Auth::user();
+    {
+        try {
+            $user = Auth::user();
 
-        if (!in_array($user->role, ['counselor', 'konselor'])) {
-            return redirect()->back()->with('error', 'Access denied');
+            if (!in_array($user->role, ['counselor', 'konselor'])) {
+                return redirect()->back()->with('error', 'Access denied');
+            }
+
+            $counselor = Counselor::where('user_id', $user->id)->first();
+            if (!$counselor) {
+                return redirect()->back()->with('error', 'Counselor profile not found');
+            }
+
+            // Get user timezone from session
+            $userTimezone = session('timezone', 'UTC');
+
+            // Get archived sessions with additional data
+            $archivedSessions = DB::table('chat_sessions as cs')
+                ->join('session_views as sv', 'cs.id_session', '=', 'sv.id_session')
+                ->join('student as s', 'cs.id_student', '=', 's.id_student')
+                ->join('users as u', 's.user_id', '=', 'u.id')
+                ->leftJoin(DB::raw('(SELECT id_session, COUNT(*) as total_messages, MAX(sent_at) as last_message_at 
+                                FROM chat_messages GROUP BY id_session) as msg'), 'cs.id_session', '=', 'msg.id_session')
+                ->where('sv.user_type', 'counselor')
+                ->where('sv.user_id', $counselor->id_counselor)
+                ->where('sv.view_status', 'archived')
+                ->select(
+                    'cs.id_session',
+                    'cs.id_student',
+                    'cs.topic',
+                    'cs.created_at as session_started_at',
+                    'cs.ended_at as session_ended_at',
+                    's.student_name',
+                    'u.name as user_name',
+                    'sv.archived_at',
+                    DB::raw('COALESCE(msg.total_messages, 0) as total_messages'),
+                    'msg.last_message_at'
+                )
+                ->orderBy('sv.archived_at', 'desc')
+                ->get();
+
+            // Convert timestamps to user timezone
+            $archivedSessions = $archivedSessions->map(function($session) use ($userTimezone) {
+                if ($session->archived_at) {
+                    $session->archived_at = Carbon::parse($session->archived_at)->setTimezone($userTimezone);
+                }
+                if ($session->session_started_at) {
+                    $session->session_started_at = Carbon::parse($session->session_started_at)->setTimezone($userTimezone);
+                }
+                if ($session->session_ended_at) {
+                    $session->session_ended_at = Carbon::parse($session->session_ended_at)->setTimezone($userTimezone);
+                }
+                if ($session->last_message_at) {
+                    $session->last_message_at = Carbon::parse($session->last_message_at)->setTimezone($userTimezone);
+                }
+                return $session;
+            });
+
+            Log::info("Retrieved {$archivedSessions->count()} archived sessions for counselor {$counselor->id_counselor}");
+
+            return view('admin.konseling.archive', compact('archivedSessions'));
+
+        } catch (\Exception $e) {
+            Log::error('Error getting archive list: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to load archive');
         }
-
-        $counselor = Counselor::where('user_id', $user->id)->first();
-        if (!$counselor) {
-            return redirect()->back()->with('error', 'Counselor profile not found');
-        }
-
-        // Get archived sessions with additional data
-        $archivedSessions = DB::table('chat_sessions as cs')
-            ->join('session_views as sv', 'cs.id_session', '=', 'sv.id_session')
-            ->join('student as s', 'cs.id_student', '=', 's.id_student')
-            ->join('users as u', 's.user_id', '=', 'u.id')
-            ->leftJoin(DB::raw('(SELECT id_session, COUNT(*) as total_messages, MAX(sent_at) as last_message_at 
-                               FROM chat_messages GROUP BY id_session) as msg'), 'cs.id_session', '=', 'msg.id_session')
-            ->where('sv.user_type', 'counselor')
-            ->where('sv.user_id', $counselor->id_counselor)
-            ->where('sv.view_status', 'archived')
-            ->select(
-                'cs.id_session',
-                'cs.id_student',
-                'cs.topic',
-                'cs.created_at as session_started_at',
-                'cs.ended_at as session_ended_at',
-                's.student_name',
-                'u.name as user_name',
-                'sv.archived_at',
-                DB::raw('COALESCE(msg.total_messages, 0) as total_messages'),
-                'msg.last_message_at'
-            )
-            ->orderBy('sv.archived_at', 'desc')
-            ->get();
-
-        Log::info("Retrieved {$archivedSessions->count()} archived sessions for counselor {$counselor->id_counselor}");
-
-        return view('admin.konseling.archive', compact('archivedSessions'));
-
-    } catch (\Exception $e) {
-        Log::error('Error getting archive list: ' . $e->getMessage());
-        return redirect()->back()->with('error', 'Failed to load archive');
     }
-}
 
 
     // ============================================
     // SHOW ARCHIVED SESSION
     // ============================================
    public function showArchivedSession($sessionId)
-{
-    try {
-        $user = Auth::user();
-        
-        if (!in_array($user->role, ['counselor', 'konselor'])) {
-            return redirect()->back()->with('error', 'Access denied');
-        }
-        
-        $counselor = Counselor::where('user_id', $user->id)->first();
-        if (!$counselor) {
-            return redirect()->back()->with('error', 'Counselor profile not found');
-        }
-        
-        // Load session with relationships
-        $session = ChatSession::with(['student.user', 'student.class', 'messages'])->find($sessionId);
-        
-        if (!$session || $session->id_counselor !== $counselor->id_counselor) {
-            return redirect()->back()->with('error', 'Session not found');
-        }
-        
-        // Check if this session is actually archived by counselor
-        $viewStatus = $session->getViewStatus('counselor', $counselor->id_counselor);
-        if ($viewStatus !== 'archived') {
-            return redirect()->route('admin.konseling.index')
-                ->with('error', 'This session is not in your archive');
-        }
-        
-        // Get archive record with all the data the view needs
-        $archivedSession = DB::table('session_views as sv')
-            ->join('chat_sessions as cs', 'sv.id_session', '=', 'cs.id_session')
-            ->join('student as s', 'cs.id_student', '=', 's.id_student')
-            ->join('users as u', 's.user_id', '=', 'u.id')
-            ->where('sv.id_session', $sessionId)
-            ->where('sv.user_type', 'counselor')
-            ->where('sv.user_id', $counselor->id_counselor)
-            ->select(
-                'sv.*',
-                'cs.created_at as session_started_at',
-                'cs.ended_at as session_ended_at',
-                'cs.id_student',
-                's.student_name',
-                'u.name as user_name'
-            )
-            ->first();
-        
-        if (!$archivedSession) {
+    {
+        try {
+            $user = Auth::user();
+            
+            if (!in_array($user->role, ['counselor', 'konselor'])) {
+                return redirect()->back()->with('error', 'Access denied');
+            }
+            
+            $counselor = Counselor::where('user_id', $user->id)->first();
+            if (!$counselor) {
+                return redirect()->back()->with('error', 'Counselor profile not found');
+            }
+
+            // Get user timezone
+            $userTimezone = session('timezone', 'UTC');
+            
+            // Load session with relationships
+            $session = ChatSession::with(['student.user', 'student.class', 'messages'])->find($sessionId);
+            
+            if (!$session || $session->id_counselor !== $counselor->id_counselor) {
+                return redirect()->back()->with('error', 'Session not found');
+            }
+            
+            // Check if this session is actually archived by counselor
+            $viewStatus = $session->getViewStatus('counselor', $counselor->id_counselor);
+            if ($viewStatus !== 'archived') {
+                return redirect()->route('admin.konseling.index')
+                    ->with('error', 'This session is not in your archive');
+            }
+            
+            // Get archive record with all the data the view needs
+            $archivedSession = DB::table('session_views as sv')
+                ->join('chat_sessions as cs', 'sv.id_session', '=', 'cs.id_session')
+                ->join('student as s', 'cs.id_student', '=', 's.id_student')
+                ->join('users as u', 's.user_id', '=', 'u.id')
+                ->where('sv.id_session', $sessionId)
+                ->where('sv.user_type', 'counselor')
+                ->where('sv.user_id', $counselor->id_counselor)
+                ->select(
+                    'sv.*',
+                    'cs.created_at as session_started_at',
+                    'cs.ended_at as session_ended_at',
+                    'cs.id_student',
+                    's.student_name',
+                    'u.name as user_name'
+                )
+                ->first();
+            
+            if (!$archivedSession) {
+                return redirect()->route('admin.konseling.archive-list')
+                    ->with('error', 'Archive record not found');
+            }
+
+            // Convert timestamps to user timezone
+            if ($archivedSession->archived_at) {
+                $archivedSession->archived_at = Carbon::parse($archivedSession->archived_at)->setTimezone($userTimezone);
+            }
+            if ($archivedSession->session_started_at) {
+                $archivedSession->session_started_at = Carbon::parse($archivedSession->session_started_at)->setTimezone($userTimezone);
+            }
+            if ($archivedSession->session_ended_at) {
+                $archivedSession->session_ended_at = Carbon::parse($archivedSession->session_ended_at)->setTimezone($userTimezone);
+            }
+            
+            // Attach the student object with class relationship to archivedSession
+            $archivedSession->student = $session->student;
+            
+            // Convert message timestamps
+            $messages = $session->messages->map(function($message) use ($userTimezone) {
+                $message->sent_at = Carbon::parse($message->sent_at)->setTimezone($userTimezone);
+                return $message;
+            });
+            
+            Log::info("Admin viewing archived session {$sessionId}", [
+                'counselor_id' => $counselor->id_counselor,
+                'message_count' => $messages->count()
+            ]);
+            
+            return view('admin.konseling.archive-show', compact('session', 'messages', 'archivedSession'));
+            
+        } catch (\Exception $e) {
+            Log::error('Error showing archived session: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'session_id' => $sessionId
+            ]);
             return redirect()->route('admin.konseling.archive-list')
-                ->with('error', 'Archive record not found');
+                ->with('error', 'Failed to load archived session');
         }
-        
-        // Attach the student object with class relationship to archivedSession
-        // This is needed for the view to access $archivedSession->student->class->class_name
-        $archivedSession->student = $session->student;
-        
-        $messages = $session->messages;
-        
-        Log::info("Admin viewing archived session {$sessionId}", [
-            'counselor_id' => $counselor->id_counselor,
-            'message_count' => $messages->count()
-        ]);
-        
-        return view('admin.konseling.archive-show', compact('session', 'messages', 'archivedSession'));
-        
-    } catch (\Exception $e) {
-        Log::error('Error showing archived session: ' . $e->getMessage(), [
-            'trace' => $e->getTraceAsString(),
-            'session_id' => $sessionId
-        ]);
-        return redirect()->route('admin.konseling.archive-list')
-            ->with('error', 'Failed to load archived session');
     }
-}
 
     // ============================================
     // END SESSION (Only counselor can do this)
